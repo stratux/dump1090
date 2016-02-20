@@ -314,8 +314,8 @@ void modesSendSBSOutput(struct modesMessage *mm) {
 
     //
     // SBS BS style output checked against the following reference
-    // http://www.homepages.mcb.net/bones/SBS/Article/Barebones42_Socket_Data.htm - seems comprehensive
-    //
+    // http://www.homepages.mcb.net/bones/SBS/Article/Barebones42_Socket_Data.htm - [link dead as of 2016-02-20]
+    // https://github.com/wiseman/node-sbs1
 
     // Decide on the basic SBS Message Type
     if        ((mm->msgtype ==  4) || (mm->msgtype == 20)) {
@@ -474,19 +474,19 @@ void modesSendSBSOutput(struct modesMessage *mm) {
 // Initial version is an exact copy of SBS function, using port 30006, to validate that
 // the new functions have been set up correctly. 
 //
+// Output format is a JSON representation of a subset of the fields used in the
+// Stratux traffic structure.
+//
 void modesSendStratuxOutput(struct modesMessage *mm) {
-    char msg[256], *p = msg;
+    char msg[2048], *p = msg;
     uint32_t     offset;
     struct timeb epocTime_receive, epocTime_now;
     struct tm    stTime_receive, stTime_now;
     int          msgType;
 
-    //
-    // SBS BS style output checked against the following reference
-    // http://www.homepages.mcb.net/bones/SBS/Article/Barebones42_Socket_Data.htm - seems comprehensive
-    //
 
-    // Decide on the basic SBS Message Type
+	
+	// Decide on the basic SBS Message Type
     if        ((mm->msgtype ==  4) || (mm->msgtype == 20)) {
         msgType = 5;
     } else if ((mm->msgtype ==  5) || (mm->msgtype == 21)) {
@@ -514,17 +514,74 @@ void modesSendStratuxOutput(struct modesMessage *mm) {
     } else if ((mm->mesub == 1) || (mm->mesub == 2)) {
         msgType = 4;
     } else {
-        return;
+        msgType = 0;
+    }
+	
+	// Begin populating the traffic.go fields.
+	// ICAO address and Mode S message types
+	p += sprintf(p, "{\"Icao_addr\":0x%X,\"DF\":%d,\"TypeCode\":%d,\"SubtypeCode\":%d,\"SBS_MsgType\":%d,",mm->addr, mm->msgtype, mm->metype,  mm->mesub, msgType);
+
+	// Callsign
+	if (mm->bFlags & MODES_ACFLAGS_CALLSIGN_VALID) {
+		p += sprintf(p, "\"Tail\":%s,", mm->flight);
+	} else {
+		p += sprintf(p, "\"Tail\":null,");
+	}
+		
+	// Position and position valid flag
+	if (mm->bFlags & MODES_ACFLAGS_LATLON_VALID) {
+		p += sprintf(p, "\"Lat\":%.6f,\"Lng\":%.6f,\"Position_valid\":true,",mm->fLat, mm->fLon);
+	} else {
+		p += sprintf(p, "\"Lat\":null,\"Lng\":null,\"Position_valid\":false,");
+	}
+	
+	// Altitude
+	// TC 19 defines difference between pressure altitude and GNSS height
+	// TC 20-22 define GNSS height
+	// All other altitude messages are pressure altitude
+	if (mm->metype >= 20 && mm->metype <= 22) {
+		if ((mm->bFlags & MODES_ACFLAGS_AOG_GROUND) == MODES_ACFLAGS_AOG_GROUND) {
+			p += sprintf(p, "\"Alt\":null,\"GnssAlt\":0,");
+		} else if (mm->bFlags & MODES_ACFLAGS_ALTITUDE_VALID) {
+			p += sprintf(p, "\"Alt\":null,\"GnssAlt\":%d,",mm->altitude);
+		} else {
+			p += sprintf(p, "\"Alt\":null,\"GnssAlt\":null,");
+		}
+	} else {
+		if ((mm->bFlags & MODES_ACFLAGS_AOG_GROUND) == MODES_ACFLAGS_AOG_GROUND) {
+			p += sprintf(p, "\"Alt\":0,\"GnssAlt\":null,");
+		} else if (mm->bFlags & MODES_ACFLAGS_ALTITUDE_VALID) {
+			p += sprintf(p, "\"Alt\":%d,\"GnssAlt\":null,",mm->altitude);
+		} else {
+			p += sprintf(p, "\"Alt\":null,\"GnssAlt\":null,");
+		}
+	}
+	
+	//Vertical velocity
+	if (mm->bFlags & MODES_ACFLAGS_VERTRATE_VALID) {
+		p += sprintf(p, "\"Vvel\":%d,", mm->vert_rate);
+	} else {
+		p += sprintf(p,  "\"Vvel\":null");
+	}
+
+	// Ground speed and track
+    if (mm->bFlags & MODES_ACFLAGS_SPEED_VALID) {
+        p += sprintf(p, "\"Speed_valid\":true,\"Speed\":%d,", mm->velocity);
+    } else {
+        p += sprintf(p, "\"Speed_valid\":false,\"Speed\":null,"); 
     }
 
-    // Fields 1 to 6 : SBS message type and ICAO address of the aircraft and some other stuff
-    p += sprintf(p, "MSG,%d,111,11111,%06X,111111,", msgType, mm->addr); 
-
-    // Find current system time
+    if (mm->bFlags & MODES_ACFLAGS_HEADING_VALID) {
+        p += sprintf(p, "\"Track\":%d,", mm->heading);
+    } else {
+        p += sprintf(p, "\"Track\":null,");
+    }
+	
+	// Find current system time
     ftime(&epocTime_now);                                         // get the current system time & date
-    stTime_now = *localtime(&epocTime_now.time);
-
-    // Find message reception time
+    stTime_now = *gmtime(&epocTime_now.time);
+		
+	// Find message reception time
     if (mm->timestampMsg && !mm->remote) {                        // Make sure the records' timestamp is valid before using it
         epocTime_receive = Modes.stSystemTimeBlk;                 // This is the time of the start of the Block we're processing
         offset   = (int) (mm->timestampMsg - Modes.timestampBlk); // This is the time (in 12Mhz ticks) into the Block
@@ -534,104 +591,31 @@ void modesSendStratuxOutput(struct modesMessage *mm) {
             epocTime_receive.millitm -= 1000;
             epocTime_receive.time ++;                             //    ..correct the overflow
         }
-        stTime_receive = *localtime(&epocTime_receive.time);
+        stTime_receive = *gmtime(&epocTime_receive.time);
     } else {
         epocTime_receive = epocTime_now;                          // We don't have a usable reception time; use the current system time
         stTime_receive = stTime_now;
     }
 
-    // Fields 7 & 8 are the message reception time and date
-    p += sprintf(p, "%04d/%02d/%02d,", (stTime_receive.tm_year+1900),(stTime_receive.tm_mon+1), stTime_receive.tm_mday);
-    p += sprintf(p, "%02d:%02d:%02d.%03d,", stTime_receive.tm_hour, stTime_receive.tm_min, stTime_receive.tm_sec, epocTime_receive.millitm);
-
-    // Fields 9 & 10 are the current time and date
-    p += sprintf(p, "%04d/%02d/%02d,", (stTime_now.tm_year+1900),(stTime_now.tm_mon+1), stTime_now.tm_mday);
-    p += sprintf(p, "%02d:%02d:%02d.%03d", stTime_now.tm_hour, stTime_now.tm_min, stTime_now.tm_sec, epocTime_now.millitm);
-
-    // Field 11 is the callsign (if we have it)
-    if (mm->bFlags & MODES_ACFLAGS_CALLSIGN_VALID) {p += sprintf(p, ",%s", mm->flight);}
-    else                                           {p += sprintf(p, ",");}
-
-    // Field 12 is the altitude (if we have it) - force to zero if we're on the ground
-    if ((mm->bFlags & MODES_ACFLAGS_AOG_GROUND) == MODES_ACFLAGS_AOG_GROUND) {
-        p += sprintf(p, ",0");
-    } else if (mm->bFlags & MODES_ACFLAGS_ALTITUDE_VALID) {
-        p += sprintf(p, ",%d", mm->altitude);
-    } else {
-        p += sprintf(p, ",");
-    }
-
-    // Field 13 is the ground Speed (if we have it)
-    if (mm->bFlags & MODES_ACFLAGS_SPEED_VALID) {
-        p += sprintf(p, ",%d", mm->velocity);
-    } else {
-        p += sprintf(p, ","); 
-    }
-
-    // Field 14 is the ground Heading (if we have it)       
-    if (mm->bFlags & MODES_ACFLAGS_HEADING_VALID) {
-        p += sprintf(p, ",%d", mm->heading);
-    } else {
-        p += sprintf(p, ",");
-    }
-
-    // Fields 15 and 16 are the Lat/Lon (if we have it)
-    if (mm->bFlags & MODES_ACFLAGS_LATLON_VALID) {p += sprintf(p, ",%1.5f,%1.5f", mm->fLat, mm->fLon);}
-    else                                         {p += sprintf(p, ",,");}
-
-    // Field 17 is the VerticalRate (if we have it)
-    if (mm->bFlags & MODES_ACFLAGS_VERTRATE_VALID) {p += sprintf(p, ",%d", mm->vert_rate);}
-    else                                           {p += sprintf(p, ",");}
-
-    // Field 18 is  the Squawk (if we have it)
-    if (mm->bFlags & MODES_ACFLAGS_SQUAWK_VALID) {p += sprintf(p, ",%x", mm->modeA);}
-    else                                         {p += sprintf(p, ",");}
-
-    // Field 19 is the Squawk Changing Alert flag (if we have it)
-    if (mm->bFlags & MODES_ACFLAGS_FS_VALID) {
-        if ((mm->fs >= 2) && (mm->fs <= 4)) {
-            p += sprintf(p, ",-1");
-        } else {
-            p += sprintf(p, ",0");
-        }
-    } else {
-        p += sprintf(p, ",");
-    }
-
-    // Field 20 is the Squawk Emergency flag (if we have it)
-    if (mm->bFlags & MODES_ACFLAGS_SQUAWK_VALID) {
-        if ((mm->modeA == 0x7500) || (mm->modeA == 0x7600) || (mm->modeA == 0x7700)) {
-            p += sprintf(p, ",-1");
-        } else {
-            p += sprintf(p, ",0");
-        }
-    } else {
-        p += sprintf(p, ",");
-    }
-
-    // Field 21 is the Squawk Ident flag (if we have it)
-    if (mm->bFlags & MODES_ACFLAGS_FS_VALID) {
-        if ((mm->fs >= 4) && (mm->fs <= 5)) {
-            p += sprintf(p, ",-1");
-        } else {
-            p += sprintf(p, ",0");
-        }
-    } else {
-        p += sprintf(p, ",");
-    }
-
-    // Field 22 is the OnTheGround flag (if we have it)
+	//Time message received (based on RPi clock). Format is 2016-02-20T06:35:43.155Z
+	p += sprintf(p, "\"Timestamp\":\"%04d-%02d-%02dT%02d:%02d:%02d.%03dZ\",", (stTime_receive.tm_year+1900),(stTime_receive.tm_mon+1), stTime_receive.tm_mday, stTime_receive.tm_hour, stTime_receive.tm_min, stTime_receive.tm_sec, epocTime_receive.millitm);
+	
+	// OnGround
     if (mm->bFlags & MODES_ACFLAGS_AOG_VALID) {
         if (mm->bFlags & MODES_ACFLAGS_AOG) {
-            p += sprintf(p, ",-1");
+            p += sprintf(p, "\"OnGround\":true,");
         } else {
-            p += sprintf(p, ",0");
+            p += sprintf(p, "\"OnGround\":false,");
         }
     } else {
-        p += sprintf(p, ",");
+        p += sprintf(p, "\"OnGround\":null,");
     }
+	
+    //Squawk
+    if (mm->bFlags & MODES_ACFLAGS_SQUAWK_VALID) {p += sprintf(p, "\"Squawk\":%x,", mm->modeA);}
+    else                                         {p += sprintf(p, "\"Squawk\":null");}
 
-    p += sprintf(p, "\r\n");
+    p += sprintf(p, "}\r\n");
     modesSendAllClients(Modes.stratuxos, msg, p-msg);
 }
 
