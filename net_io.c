@@ -561,7 +561,7 @@ void modesSendStratuxOutput(struct modesMessage *mm) {
 	if (mm->bFlags & MODES_ACFLAGS_VERTRATE_VALID) {
 		p += sprintf(p, "\"Vvel\":%d,", mm->vert_rate);
 	} else {
-		p += sprintf(p,  "\"Vvel\":null");
+		p += sprintf(p,  "\"Vvel\":null,");
 	}
 
 	// Ground speed and track
