@@ -471,8 +471,6 @@ void modesSendSBSOutput(struct modesMessage *mm) {
 //
 // Write Stratux output to TCP clients
 // The message structure mm->bFlags tells us what has been updated by this message
-// Initial version is an exact copy of SBS function, using port 30006, to validate that
-// the new functions have been set up correctly. 
 //
 // Output format is a JSON representation of a subset of the fields used in the
 // Stratux traffic structure.
@@ -612,7 +610,7 @@ void modesSendStratuxOutput(struct modesMessage *mm) {
     }
 	
     //Squawk
-    if (mm->bFlags & MODES_ACFLAGS_SQUAWK_VALID) {p += sprintf(p, "\"Squawk\":%x,", mm->modeA);}
+    if (mm->bFlags & MODES_ACFLAGS_SQUAWK_VALID) {p += sprintf(p, "\"Squawk\":%x", mm->modeA);}
     else                                         {p += sprintf(p, "\"Squawk\":null");}
 
     p += sprintf(p, "}\r\n");
