@@ -521,7 +521,7 @@ void modesSendStratuxOutput(struct modesMessage *mm) {
 
 	// Callsign
 	if (mm->bFlags & MODES_ACFLAGS_CALLSIGN_VALID) {
-		p += sprintf(p, "\"Tail\":%s,", mm->flight);
+		p += sprintf(p, "\"Tail\":\"%s\",", mm->flight);
 	} else {
 		p += sprintf(p, "\"Tail\":null,");
 	}
