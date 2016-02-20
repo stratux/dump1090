@@ -168,6 +168,112 @@ similar to:
 
 This can be used to feed data to various sharing sites without the need to use another decoder.
 
+Port 30006
+---
+
+Connected clients are served with JSON-formatted messages, corresponding to variables
+used in the Stratux project (https://github.com/cyoung/stratux). ICAO codes are decimalized.
+
+TO-DO:
+- Define and pass emitter catagory (DF17 BDS 0,8)
+- Define and pass GEOMETRIC HEIGHT DIFFERENCE FROM BARO. ALT (DF17 BDS 0,9)
+
+Sample airborne position message (DF17 BDS0,5):
+	
+	{
+	"Icao_addr":11220537,
+	"DF":17,
+	"TypeCode":11,
+	"SubtypeCode":0,
+	"SBS_MsgType":3,
+	"Tail":null,
+	"Lat":44.840836,
+	"Lng":-93.387582,
+	"Position_valid":true,
+	"Alt":6325,
+	"GnssAlt":null,
+	"Vvel":null,
+	"Speed_valid":false,
+	"Speed":null,
+	"Track":null,
+	"Timestamp":"2016-02-20T17:02:36.315Z",
+	"OnGround":false,
+	"Squawk":null
+	}
+
+Sample airborne velocity message (DF17 BDS 0,8):
+
+	{
+	"Icao_addr":11220537,
+	"DF":17,
+	"TypeCode":19,
+	"SubtypeCode":1,
+	"SBS_MsgType":4,
+	"Tail":null,
+	"Lat":null,
+	"Lng":null,
+	"Position_valid":false,
+	"Alt":null,
+	"GnssAlt":null,
+	"Vvel":2880,
+	"Speed_valid":true,
+	"Speed":282,
+	"Track":204,
+	"Timestamp":"2016-02-20T17:02:37.770Z",
+	"OnGround":false,
+	"Squawk":null
+	}
+	
+Sample identification message (DF17 BDS 0,8):
+
+	{
+	"Icao_addr":11220537,
+	"DF":17,
+	"TypeCode":4,
+	"SubtypeCode":0,
+	"SBS_MsgType":1,
+	"Tail":"SCX759  ",
+	"Lat":null,
+	"Lng":null,
+	"Position_valid":false,
+	"Alt":null,
+	"GnssAlt":null,
+	"Vvel":null,
+	"Speed_valid":false,
+	"Speed":null,
+	"Track":null,
+	"Timestamp":"2016-02-20T17:02:38.505Z",
+	"OnGround":false,
+	"Squawk":null
+	}
+	
+	
+Stratux will decode using the follwing type definitions.
+
+	type dump1090Data struct {
+		Icao_addr   	uint32
+		DF          	int
+		TypeCode    	int
+		SubtypeCode 	int
+		SBS_MsgType 	int
+
+		OnGround       bool
+		Position_valid bool
+		Lat            *float32
+		Lng            *float32
+		Alt            *int32
+		GnssAlt        *int32 // GNSS altitude above WGS84 datum.
+		Speed_valid    bool
+		Speed          *uint16
+		Track          *uint16
+		Vvel           *int16
+		Tail           *string
+		Timestamp      time.Time // may change 
+		Squawk         *int 
+	}
+
+
+
 Antenna
 ---
 
