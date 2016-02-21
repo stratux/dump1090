@@ -527,8 +527,27 @@ void modesSendStratuxOutput(struct modesMessage *mm) {
 	}
 	
 	// Emitter type
-	if (mm->bFlags & MODES_ACFLAGS_CALLSIGN_VALID) {
-		p += sprintf(p, "\"Emitter_category\":%d,", mm->emitter);
+	int emitter = 0;
+	int setEmitter = 0;
+	if ((mm->msgtype ==  17) || (mm->msgtype != 18)) {
+		switch (mm->metype) {
+			case 1:
+				emitter = (mm->mesub & 0x07) | 0x18;
+				setEmitter = 1;
+			case 2:
+				emitter = (mm->mesub & 0x07) | 0x10;
+				setEmitter = 1;
+			case 3:
+				emitter = (mm->mesub & 0x07) | 0x08;
+				setEmitter = 1;
+			case 4:
+				emitter = (mm->mesub & 0x07);
+				setEmitter = 1;
+		}
+	}
+	
+	if (setEmitter) {
+		p += sprintf(p, "\"Emitter_category\":%d,", emitter);
 	} else {
 		p += sprintf(p, "\"Emitter_category\":null,");
 	}
