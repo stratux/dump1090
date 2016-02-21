@@ -196,28 +196,28 @@ Sample identification message (DF17 BDS 0,8):
 	
 Stratux will decode using the following type definitions. Fields declared as *pointers will be sent from dump1090 as nulls if the reported parameter is not part of the message being decoded.
 
-type dump1090Data struct {
-	Icao_addr        uint32
-	DF               int 
-	CA               int 
-	TypeCode         int 
-	SubtypeCode      int 
-	SBS_MsgType      int 		// As described in documentation for Port 30003
-	OnGround         *bool
-	Emitter_category *int		// Mapped to byte values using GDL90 convention: e.g A-1 (Light) == 0x01, A-5 (Heavy) = 0x05, B-1 (Glider) = 0x09, B-6 (UAV) = 0x0E
-	Position_valid   bool
-	Lat              *float32
-	Lng              *float32
-	Alt              *int32
-	GnssAlt          *int32 	// Reported by DF-17 and DF-18 Type 20-22
-	Speed_valid      bool
-	Speed            *uint16
-	Track            *uint16
-	Vvel             *int16
-	Tail             *string
-	Timestamp        time.Time	// ISO-8601 representation. 2016-02-21T22:44:56.345Z
-	Squawk           *int
-}
+	type dump1090Data struct {
+		Icao_addr        uint32
+		DF               int 
+		CA               int 
+		TypeCode         int 
+		SubtypeCode      int 
+		SBS_MsgType      int 		// As described in documentation for Port 30003
+		OnGround         *bool
+		Emitter_category *int		// Mapped to byte values using GDL90 convention: e.g A-1 (Light) == 0x01, A-5 (Heavy) = 0x05, B-1 (Glider) = 0x09, B-6 (UAV) = 0x0E
+		Position_valid   bool
+		Lat              *float32
+		Lng              *float32
+		Alt              *int32
+		GnssAlt          *int32 	// Reported by DF-17 and DF-18 Type 20-22
+		Speed_valid      bool
+		Speed            *uint16
+		Track            *uint16
+		Vvel             *int16
+		Tail             *string
+		Timestamp        time.Time	// ISO-8601 representation. 2016-02-21T22:44:56.345Z
+		Squawk           *int
+	}
 
 
 

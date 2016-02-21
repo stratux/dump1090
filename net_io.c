@@ -525,7 +525,7 @@ void modesSendStratuxOutput(struct modesMessage *mm) {
 	
 	// Emitter type
 	int emitter = 0;
-	int setEmitter = 0	;
+	int setEmitter = 0;
 	if ((mm->msgtype ==  17) || (mm->msgtype = 18)) {
 		switch (mm->metype) {
 			case 1:
