@@ -465,7 +465,6 @@ void modesSendSBSOutput(struct modesMessage *mm) {
     p += sprintf(p, "\r\n");
     modesSendAllClients(Modes.sbsos, msg, p-msg);
 }
-
 //
 //=========================================================================
 //
@@ -482,8 +481,6 @@ void modesSendStratuxOutput(struct modesMessage *mm) {
     struct tm    stTime_receive, stTime_now;
     int          msgType;
 
-
-	
 	// Decide on the basic SBS Message Type
     if        ((mm->msgtype ==  4) || (mm->msgtype == 20)) {
         msgType = 5;
@@ -642,18 +639,14 @@ void modesSendStratuxOutput(struct modesMessage *mm) {
     p += sprintf(p, "}\r\n");
     modesSendAllClients(Modes.stratuxos, msg, p-msg);
 }
-
-
-
-
 //
 //=========================================================================
 //
 void modesQueueOutput(struct modesMessage *mm) {
-    if (Modes.stat_sbs_connections)   {modesSendSBSOutput(mm);}
-    if (Modes.stat_beast_connections) {modesSendBeastOutput(mm);}
-    if (Modes.stat_raw_connections)   {modesSendRawOutput(mm);}
-	if (Modes.stat_stratux_connections)   {modesSendStratuxOutput(mm);}
+    if (Modes.stat_sbs_connections)     {modesSendSBSOutput(mm);}
+    if (Modes.stat_beast_connections)   {modesSendBeastOutput(mm);}
+    if (Modes.stat_raw_connections)     {modesSendRawOutput(mm);}
+    if (Modes.stat_stratux_connections) {modesSendStratuxOutput(mm);}
 }
 //
 //=========================================================================

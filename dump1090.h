@@ -167,17 +167,17 @@
 
 #define MODES_NET_HEARTBEAT_RATE       900      // Each block is approx 65mS - default is > 1 min
 
-#define MODES_NET_SERVICES_NUM          7
-#define MODES_NET_INPUT_RAW_PORT    30001
-#define MODES_NET_OUTPUT_RAW_PORT   30002
-#define MODES_NET_OUTPUT_SBS_PORT   30003
-#define MODES_NET_INPUT_BEAST_PORT  30004
-#define MODES_NET_OUTPUT_BEAST_PORT 30005
-#define MODES_NET_OUTPUT_STRATUX_PORT   30006
-#define MODES_NET_HTTP_PORT          8080
-#define MODES_CLIENT_BUF_SIZE  1024
-#define MODES_NET_SNDBUF_SIZE (1024*64)
-#define MODES_NET_SNDBUF_MAX  (7)
+#define MODES_NET_SERVICES_NUM            7
+#define MODES_NET_INPUT_RAW_PORT      30001
+#define MODES_NET_OUTPUT_RAW_PORT     30002
+#define MODES_NET_OUTPUT_SBS_PORT     30003
+#define MODES_NET_INPUT_BEAST_PORT    30004
+#define MODES_NET_OUTPUT_BEAST_PORT   30005
+#define MODES_NET_OUTPUT_STRATUX_PORT 30006
+#define MODES_NET_HTTP_PORT            8080
+#define MODES_CLIENT_BUF_SIZE          1024
+#define MODES_NET_SNDBUF_SIZE     (1024*64)
+#define MODES_NET_SNDBUF_MAX            (7)
 
 #ifndef HTMLPATH
 #define HTMLPATH   "./public_html"      // default path for gmap.html etc
@@ -276,7 +276,7 @@ struct {                             // Internal state
     int            ris;              // Raw input listening socket
     int            bos;              // Beast output listening socket
     int            bis;              // Beast input listening socket
-	int            stratuxos;        // Stratux output listening socket
+    int            stratuxos;        // Stratux output listening socket
     int            https;            // HTTP listening socket
     char          *rawOut;           // Buffer for building raw output data
     int            rawOutUsed;       // How much of the buffer is currently used
@@ -307,7 +307,7 @@ struct {                             // Internal state
     int   net_input_raw_port;        // Raw input TCP port
     int   net_output_beast_port;     // Beast output TCP port
     int   net_input_beast_port;      // Beast input TCP port
-	int   net_output_stratux_port;   // Stratux output TCP port
+    int   net_output_stratux_port;   // Stratux output TCP port
     char  *net_bind_address;         // Bind address
     int   net_http_port;             // HTTP port
     int   net_sndbuf_size;           // TCP output buffer size (64Kb * 2^n)
@@ -355,7 +355,7 @@ struct {                             // Internal state
     unsigned int stat_sbs_connections;
     unsigned int stat_raw_connections;
     unsigned int stat_beast_connections;
-	unsigned int stat_stratux_connections;
+    unsigned int stat_stratux_connections;
     unsigned int stat_out_of_phase;
     unsigned int stat_ph_demodulated0;
     unsigned int stat_ph_demodulated1;
