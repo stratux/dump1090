@@ -37,7 +37,7 @@
 // MinorVer changes when additional features are added, but not for bug fixes (range 00-99)
 // DayDate & Year changes for all changes, including for bug fixes. It represent the release date of the update
 //
-#define MODES_DUMP1090_VERSION     "1.11.2002.16"
+#define MODES_DUMP1090_VERSION     "1.11.2102.16"
 
 // ============================= Include files ==========================
 
@@ -196,7 +196,7 @@ struct client {
     char   buf[MODES_CLIENT_BUF_SIZE+1]; // Read buffer
 };
 
-// Structure used to describe an aircraft in iteractive mode
+// Structure used to describe an aircraft in interactive mode
 struct aircraft {
     uint32_t      addr;           // ICAO address
     char          flight[16];     // Flight number
@@ -409,6 +409,7 @@ struct modesMessage {
     int    ns_velocity;         // N/S velocity.
     int    vert_rate;           // Vertical rate.
     int    velocity;            // Reported by aircraft, or computed from from EW and NS velocity
+	int    emitter;				// Emitter category from BDS 0,8
 
     // DF4, DF5, DF20, DF21
     int  fs;                    // Flight status for DF4,5,20,21

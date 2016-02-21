@@ -985,6 +985,8 @@ void decodeModesMessage(struct modesMessage *mm, unsigned char *msg) {
             mm->flight[4] = ais_charset[chars & 0x3F];
 
             mm->flight[8] = '\0';
+			
+			mm->emitter = (msg[4] & 0x07)+8*(4-metype);
 
         } else if (metype == 19) { // Airborne Velocity Message
 

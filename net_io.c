@@ -525,7 +525,14 @@ void modesSendStratuxOutput(struct modesMessage *mm) {
 	} else {
 		p += sprintf(p, "\"Tail\":null,");
 	}
-		
+	
+	// Emitter type
+	if (mm->bFlags & MODES_ACFLAGS_CALLSIGN_VALID) {
+		p += sprintf(p, "\"Emitter_category\":%d,", mm->emitter);
+	} else {
+		p += sprintf(p, "\"Emitter_category\":null,");
+	}
+	
 	// Position and position valid flag
 	if (mm->bFlags & MODES_ACFLAGS_LATLON_VALID) {
 		p += sprintf(p, "\"Lat\":%.6f,\"Lng\":%.6f,\"Position_valid\":true,",mm->fLat, mm->fLon);

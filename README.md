@@ -7,7 +7,7 @@ The main features are:
 
 * Robust decoding of weak messages, with mode1090 many users observed
   improved range compared to other popular decoders.
-* Network support: TCP30003 stream (MSG5...), Raw packets, HTTP.
+* Network support: TCP30003 stream (MSG5...), TCP30006 stream (Stratux), Raw packets, HTTP.
 * Embedded HTTP server that displays the currently detected aircrafts on
   Google Map.
 * Single bit errors correction using the 24 bit CRC.
@@ -180,46 +180,46 @@ TO-DO:
 
 Sample Mode S surveillance replies (DF4 / DF 5):
 
-	{"Icao_addr":11008793,"DF":4,"CA":0,"TypeCode":0,"SubtypeCode":0,"SBS_MsgType":5,"Tail":null,"Lat":null,"Lng":null,"Position_valid":false,"Alt":8325,"GnssAlt":null,"Vvel":null,"Speed_valid":false,"Speed":null,"Track":null,"Timestamp":"2016-02-21T01:25:15.150Z","OnGround":false,"Squawk":null}
-	{"Icao_addr":11008793,"DF":5,"CA":5,"TypeCode":0,"SubtypeCode":0,"SBS_MsgType":6,"Tail":null,"Lat":null,"Lng":null,"Position_valid":false,"Alt":null,"GnssAlt":null,"Vvel":null,"Speed_valid":false,"Speed":null,"Track":null,"Timestamp":"2016-02-21T01:24:41.857Z","OnGround":false,"Squawk":2455}
+	{"Icao_addr":11008793,"DF":4,"CA":0,"TypeCode":0,"SubtypeCode":0,"SBS_MsgType":5,"Tail":null,"Emitter_category":null,"Lat":null,"Lng":null,"Position_valid":false,"Alt":8325,"GnssAlt":null,"Vvel":null,"Speed_valid":false,"Speed":null,"Track":null,"Timestamp":"2016-02-21T01:25:15.150Z","OnGround":false,"Squawk":null}
+	{"Icao_addr":11008793,"DF":5,"CA":5,"TypeCode":0,"SubtypeCode":0,"SBS_MsgType":6,"Tail":null,"Emitter_category":null,"Lat":null,"Lng":null,"Position_valid":false,"Alt":null,"GnssAlt":null,"Vvel":null,"Speed_valid":false,"Speed":null,"Track":null,"Timestamp":"2016-02-21T01:24:41.857Z","OnGround":false,"Squawk":2455}
 
 Sample airborne position message (DF17 BDS0,5):
 	
-	{"Icao_addr":11008793,"DF":17,"CA":5,"TypeCode":11,"SubtypeCode":0,"SBS_MsgType":3,"Tail":null,"Lat":44.787815,"Lng":-93.333212,"Position_valid":true,"Alt":8300,"GnssAlt":null,"Vvel":null,"Speed_valid":false,"Speed":null,"Track":null,"Timestamp":"2016-02-21T01:25:14.652Z","OnGround":false,"Squawk":null}
+	{"Icao_addr":11008793,"DF":17,"CA":5,"TypeCode":11,"SubtypeCode":0,"SBS_MsgType":3,"Tail":null,"Emitter_category":null,"Lat":44.787815,"Lng":-93.333212,"Position_valid":true,"Alt":8300,"GnssAlt":null,"Vvel":null,"Speed_valid":false,"Speed":null,"Track":null,"Timestamp":"2016-02-21T01:25:14.652Z","OnGround":false,"Squawk":null}
 
 Sample airborne velocity message (DF17 BDS 0,8):
 
-	{"Icao_addr":11057338,"DF":17,"CA":5,"TypeCode":19,"SubtypeCode":1,"SBS_MsgType":4,"Tail":null,"Lat":null,"Lng":null,"Position_valid":false,"Alt":null,"GnssAlt":null,"Vvel":0,"Speed_valid":true,"Speed":388,"Track":268,"Timestamp":"2016-02-21T01:25:15.456Z","OnGround":false,"Squawk":null}
+	{"Icao_addr":11057338,"DF":17,"CA":5,"TypeCode":19,"SubtypeCode":1,"SBS_MsgType":4,"Tail":null,"Emitter_category":null,"Lat":null,"Lng":null,"Position_valid":false,"Alt":null,"GnssAlt":null,"Vvel":0,"Speed_valid":true,"Speed":388,"Track":268,"Timestamp":"2016-02-21T01:25:15.456Z","OnGround":false,"Squawk":null}
 	
 Sample identification message (DF17 BDS 0,8):
 
-	{"Icao_addr":11008793,"DF":17,"CA":5,"TypeCode":4,"SubtypeCode":0,"SBS_MsgType":1,"Tail":"NKS614  ","Lat":null,"Lng":null,"Position_valid":false,"Alt":null,"GnssAlt":null,"Vvel":null,"Speed_valid":false,"Speed":null,"Track":null,"Timestamp":"2016-02-21T01:25:18.248Z","OnGround":false,"Squawk":null}
-
-	
+	{"Icao_addr":11008793,"DF":17,"CA":5,"TypeCode":4,"SubtypeCode":0,"SBS_MsgType":1,"Tail":"NKS614  ","Emitter_category":3,"Lat":null,"Lng":null,"Position_valid":false,"Alt":null,"GnssAlt":null,"Vvel":null,"Speed_valid":false,"Speed":null,"Track":null,"Timestamp":"2016-02-21T01:25:18.248Z","OnGround":false,"Squawk":null}
+            
+			
 Stratux will decode using the follwing type definitions.
 
-	type dump1090Data struct {
-		Icao_addr   	uint32
-		DF          	int
-		CA              int // (DF11 and DF17 capability; DF18 control field; zero for all other DF types)
-		TypeCode    	int
-		SubtypeCode 	int
-		SBS_MsgType 	int
-
-		OnGround       bool
-		Position_valid bool
-		Lat            *float32
-		Lng            *float32
-		Alt            *int32
-		GnssAlt        *int32 // GNSS altitude above WGS84 datum.
-		Speed_valid    bool
-		Speed          *uint16
-		Track          *uint16
-		Vvel           *int16
-		Tail           *string
-		Timestamp      time.Time // may change 
-		Squawk         *int 
-	}
+type dump1090Data struct {
+	Icao_addr        uint32
+	DF               int 
+	CA               int 
+	TypeCode         int 
+	SubtypeCode      int 
+	SBS_MsgType      int 
+	OnGround         *bool
+	Emitter_category *int
+	Position_valid   bool
+	Lat              *float32
+	Lng              *float32
+	Alt              *int32
+	GnssAlt          *int32 
+	Speed_valid      bool
+	Speed            *uint16
+	Track            *uint16
+	Vvel             *int16
+	Tail             *string
+	Timestamp        time.Time
+	Squawk           *int
+}
 
 
 
