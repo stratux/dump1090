@@ -517,7 +517,7 @@ void modesSendStratuxOutput(struct modesMessage *mm) {
 	
 	// Begin populating the traffic.go fields.
 	// ICAO address and Mode S message types
-	p += sprintf(p, "{\"Icao_addr\":%d,\"DF\":%d,\"TypeCode\":%d,\"SubtypeCode\":%d,\"SBS_MsgType\":%d,",mm->addr, mm->msgtype, mm->metype,  mm->mesub, msgType);
+	p += sprintf(p, "{\"Icao_addr\":%d,\"DF\":%d,\"CA\":%d,\"TypeCode\":%d,\"SubtypeCode\":%d,\"SBS_MsgType\":%d,",mm->addr, mm->msgtype, mm->ca, mm->metype,  mm->mesub, msgType);
 
 	// Callsign
 	if (mm->bFlags & MODES_ACFLAGS_CALLSIGN_VALID) {

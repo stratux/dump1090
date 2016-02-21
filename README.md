@@ -253,6 +253,7 @@ Stratux will decode using the follwing type definitions.
 	type dump1090Data struct {
 		Icao_addr   	uint32
 		DF          	int
+		CA              int // (DF11 and DF17 capability; DF18 control field; zero for all other DF types)
 		TypeCode    	int
 		SubtypeCode 	int
 		SBS_MsgType 	int
