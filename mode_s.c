@@ -960,9 +960,9 @@ void decodeModesMessage(struct modesMessage *mm, unsigned char *msg) {
         }
     }
 
-    // Fields for DF17, DF18_CF0, DF18_CF1, DF18_CF6 squitters
+    // Fields for DF17, DF18_CF0, DF18_CF1, DF18_CF6, DF18_CF2, DF18_CF5 squitters
     if (  (mm->msgtype == 17) 
-      || ((mm->msgtype == 18) && ((mm->ca == 0) || (mm->ca == 1) || (mm->ca == 6)) )) {
+      || ((mm->msgtype == 18) && ((mm->ca == 0) || (mm->ca == 1) || (mm->ca == 2) || (mm->ca == 5) || (mm->ca == 6)) )) {
          int metype = mm->metype = msg[4] >> 3;   // Extended squitter message type
          int mesub  = mm->mesub  = (metype == 29 ? ((msg[4]&6)>>1) : (msg[4]  & 7));   // Extended squitter message subtype
 
