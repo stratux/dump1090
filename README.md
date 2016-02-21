@@ -175,78 +175,26 @@ Connected clients are served with JSON-formatted messages, corresponding to vari
 used in the Stratux project (https://github.com/cyoung/stratux). ICAO codes are decimalized.
 
 TO-DO:
-- Define and pass emitter catagory (DF17 BDS 0,8)
+- Define and pass emitter category (DF17 BDS 0,8)
 - Define and pass GEOMETRIC HEIGHT DIFFERENCE FROM BARO. ALT (DF17 BDS 0,9)
+
+Sample Mode S surveillance replies (DF4 / DF 5):
+
+	{"Icao_addr":11008793,"DF":4,"CA":0,"TypeCode":0,"SubtypeCode":0,"SBS_MsgType":5,"Tail":null,"Lat":null,"Lng":null,"Position_valid":false,"Alt":8325,"GnssAlt":null,"Vvel":null,"Speed_valid":false,"Speed":null,"Track":null,"Timestamp":"2016-02-21T01:25:15.150Z","OnGround":false,"Squawk":null}
+	{"Icao_addr":11008793,"DF":5,"CA":5,"TypeCode":0,"SubtypeCode":0,"SBS_MsgType":6,"Tail":null,"Lat":null,"Lng":null,"Position_valid":false,"Alt":null,"GnssAlt":null,"Vvel":null,"Speed_valid":false,"Speed":null,"Track":null,"Timestamp":"2016-02-21T01:24:41.857Z","OnGround":false,"Squawk":2455}
 
 Sample airborne position message (DF17 BDS0,5):
 	
-	{
-	"Icao_addr":11220537,
-	"DF":17,
-	"TypeCode":11,
-	"SubtypeCode":0,
-	"SBS_MsgType":3,
-	"Tail":null,
-	"Lat":44.840836,
-	"Lng":-93.387582,
-	"Position_valid":true,
-	"Alt":6325,
-	"GnssAlt":null,
-	"Vvel":null,
-	"Speed_valid":false,
-	"Speed":null,
-	"Track":null,
-	"Timestamp":"2016-02-20T17:02:36.315Z",
-	"OnGround":false,
-	"Squawk":null
-	}
+	{"Icao_addr":11008793,"DF":17,"CA":5,"TypeCode":11,"SubtypeCode":0,"SBS_MsgType":3,"Tail":null,"Lat":44.787815,"Lng":-93.333212,"Position_valid":true,"Alt":8300,"GnssAlt":null,"Vvel":null,"Speed_valid":false,"Speed":null,"Track":null,"Timestamp":"2016-02-21T01:25:14.652Z","OnGround":false,"Squawk":null}
 
 Sample airborne velocity message (DF17 BDS 0,8):
 
-	{
-	"Icao_addr":11220537,
-	"DF":17,
-	"TypeCode":19,
-	"SubtypeCode":1,
-	"SBS_MsgType":4,
-	"Tail":null,
-	"Lat":null,
-	"Lng":null,
-	"Position_valid":false,
-	"Alt":null,
-	"GnssAlt":null,
-	"Vvel":2880,
-	"Speed_valid":true,
-	"Speed":282,
-	"Track":204,
-	"Timestamp":"2016-02-20T17:02:37.770Z",
-	"OnGround":false,
-	"Squawk":null
-	}
+	{"Icao_addr":11057338,"DF":17,"CA":5,"TypeCode":19,"SubtypeCode":1,"SBS_MsgType":4,"Tail":null,"Lat":null,"Lng":null,"Position_valid":false,"Alt":null,"GnssAlt":null,"Vvel":0,"Speed_valid":true,"Speed":388,"Track":268,"Timestamp":"2016-02-21T01:25:15.456Z","OnGround":false,"Squawk":null}
 	
 Sample identification message (DF17 BDS 0,8):
 
-	{
-	"Icao_addr":11220537,
-	"DF":17,
-	"TypeCode":4,
-	"SubtypeCode":0,
-	"SBS_MsgType":1,
-	"Tail":"SCX759  ",
-	"Lat":null,
-	"Lng":null,
-	"Position_valid":false,
-	"Alt":null,
-	"GnssAlt":null,
-	"Vvel":null,
-	"Speed_valid":false,
-	"Speed":null,
-	"Track":null,
-	"Timestamp":"2016-02-20T17:02:38.505Z",
-	"OnGround":false,
-	"Squawk":null
-	}
-	
+	{"Icao_addr":11008793,"DF":17,"CA":5,"TypeCode":4,"SubtypeCode":0,"SBS_MsgType":1,"Tail":"NKS614  ","Lat":null,"Lng":null,"Position_valid":false,"Alt":null,"GnssAlt":null,"Vvel":null,"Speed_valid":false,"Speed":null,"Track":null,"Timestamp":"2016-02-21T01:25:18.248Z","OnGround":false,"Squawk":null}
+
 	
 Stratux will decode using the follwing type definitions.
 
