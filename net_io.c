@@ -528,20 +528,20 @@ void modesSendStratuxOutput(struct modesMessage *mm) {
 	
 	// Emitter type
 	int emitter = 0;
-	int setEmitter = 0;
-	if ((mm->msgtype ==  17) || (mm->msgtype != 18)) {
+	int setEmitter = 0	;
+	if ((mm->msgtype ==  17) || (mm->msgtype = 18)) {
 		switch (mm->metype) {
 			case 1:
-				emitter = (mm->mesub & 0x07) | 0x18;
+				emitter = ((mm->mesub) | 0x18);
 				setEmitter = 1;
 			case 2:
-				emitter = (mm->mesub & 0x07) | 0x10;
+				emitter = ((mm->mesub) | 0x10);
 				setEmitter = 1;
 			case 3:
-				emitter = (mm->mesub & 0x07) | 0x08;
+				emitter = ((mm->mesub) | 0x08);
 				setEmitter = 1;
 			case 4:
-				emitter = (mm->mesub & 0x07);
+				emitter = (mm->mesub);
 				setEmitter = 1;
 		}
 	}
