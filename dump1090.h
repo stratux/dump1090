@@ -143,6 +143,8 @@
 #define MODES_ACFLAGS_FS_VALID       (1<<13) // Aircraft Flight Status is known
 #define MODES_ACFLAGS_NSEWSPD_VALID  (1<<14) // Aircraft EW and NS Speed is known
 #define MODES_ACFLAGS_LATLON_REL_OK  (1<<15) // Indicates it's OK to do a relative CPR
+#define MODES_ACFLAGS_OP_STATUS_OK   (1<<16) // Aircraft Operational Status is known
+
 
 #define MODES_ACFLAGS_LLEITHER_VALID (MODES_ACFLAGS_LLEVEN_VALID | MODES_ACFLAGS_LLODD_VALID)
 #define MODES_ACFLAGS_LLBOTH_VALID   (MODES_ACFLAGS_LLEVEN_VALID | MODES_ACFLAGS_LLODD_VALID)
@@ -177,7 +179,7 @@
 #define MODES_NET_HTTP_PORT            8080
 #define MODES_CLIENT_BUF_SIZE          1024
 #define MODES_NET_SNDBUF_SIZE     (1024*64)
-#define MODES_NET_SNDBUF_MAX            (7)
+#define MODES_NET_SNDBUF_MAX            (8)
 
 #ifndef HTMLPATH
 #define HTMLPATH   "./public_html"      // default path for gmap.html etc
@@ -215,6 +217,7 @@ struct aircraft {
     long          modeAcount;     // Mode A Squawk hit Count
     long          modeCcount;     // Mode C Altitude hit Count
     int           modeACflags;    // Flags for mode A/C recognition
+    int           nacp;           // Navigation Accuracy Category - Position. Extract from [DF=17, TC=31] or [DF=18, TC=19]
 
     // Encoded latitude and longitude as extracted by odd and even CPR encoded messages
     int           odd_cprlat;
@@ -409,6 +412,7 @@ struct modesMessage {
     int    ns_velocity;         // N/S velocity.
     int    vert_rate;           // Vertical rate.
     int    velocity;            // Reported by aircraft, or computed from from EW and NS velocity
+    int    nacp;                // Navigation Accuracy Category - Position. Extract from [DF=17, TC=31] or [DF=18, TC=19]
 
     // DF4, DF5, DF20, DF21
     int  fs;                    // Flight status for DF4,5,20,21

@@ -1102,12 +1102,21 @@ void decodeModesMessage(struct modesMessage *mm, unsigned char *msg) {
             }
 
         } else if (metype == 29) { // Aircraft Trajectory Intent
-
+			mm->bFlags |= MODES_ACFLAGS_OP_STATUS_OK;
+			mm->nacp = (((msg[8] << 3) || (msg[9] >> 5)) &0x0F);
+		
+		
         } else if (metype == 30) { // Aircraft Operational Coordination
 
         } else if (metype == 31) { // Aircraft Operational Status
-
-        } else { // Other metypes
+			mm->bFlags |= MODES_ACFLAGS_OP_STATUS_OK;
+			mm->nacp = (msg[9] & 0x0F);
+		        
+		} else if ((mm->msgtype == 18) && (metype == 19)) { // TIS-B velocity message reports NACp
+			mm->bFlags |= MODES_ACFLAGS_OP_STATUS_OK;
+			mm->nacp = (msg[5] >> 3) & 0x0F;
+		
+		} else { // Other metypes
 
         }
     }
@@ -1320,6 +1329,23 @@ void displayModesMessage(struct modesMessage *mm) {
                 printf("    Longitude: %d (not decoded)\n", mm->raw_longitude);
             }
 
+        } else if (mm->metype == 31) { // Extended Squitter Operational Status
+            if (mm->mesub == 1) {
+				printf("    Type %s report\n", (mm->mesub & 0x01) ? "Surface" : "Airborne");
+				printf("    Type NACp = %d\n", mm->nacp);
+		    } else {
+                printf("    Unrecognized ME subtype: %d subtype: %d\n", mm->metype, mm->mesub);
+            }
+			
+			
+		} else if (mm->metype == 29) { // Extended Squitter Target State and Status
+                if (mm->bFlags & MODES_ACFLAGS_OP_STATUS_OK) {
+					printf("    OK flag Type NACp = %d\n", mm->nacp);
+				} else {
+					printf("    Not OK flag Type NACp = %d\n", mm->nacp);
+					printf("\"NACp\":%d,", mm->nacp);
+		        }
+				
         } else if (mm->metype == 28) { // Extended Squitter Aircraft Status
             if (mm->mesub == 1) {
 				printf("    Emergency State: %s\n", es_str[(mm->msg[5] & 0xE0) >> 5]);

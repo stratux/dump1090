@@ -504,6 +504,8 @@ void modesSendStratuxOutput(struct modesMessage *mm) {
             {msgType = 3;}
         else
             {msgType = 7;}
+    } else if ((mm->metype == 31) || (mm->metype == 31)) {
+		msgType = 9; // new message type for operational status message
     } else if (mm->metype !=  19) {
         return;
     } else if ((mm->mesub == 1) || (mm->mesub == 2)) {
@@ -513,8 +515,8 @@ void modesSendStratuxOutput(struct modesMessage *mm) {
     }
 	
 	// Begin populating the traffic.go fields.
-	// ICAO address and Mode S message types
-	p += sprintf(p, "{\"Icao_addr\":%d,\"DF\":%d,\"CA\":%d,\"TypeCode\":%d,\"SubtypeCode\":%d,\"SBS_MsgType\":%d,",mm->addr, mm->msgtype, mm->ca, mm->metype,  mm->mesub, msgType);
+	// ICAO address, Mode S message types, and signal level
+	p += sprintf(p, "{\"Icao_addr\":%d,\"DF\":%d,\"CA\":%d,\"TypeCode\":%d,\"SubtypeCode\":%d,\"SBS_MsgType\":%d,\"SignalLevel\":%d,",mm->addr, mm->msgtype, mm->ca, mm->metype,  mm->mesub, msgType, mm->signalLevel);
 
 	// Callsign
 	if (mm->bFlags & MODES_ACFLAGS_CALLSIGN_VALID) {
@@ -631,6 +633,14 @@ void modesSendStratuxOutput(struct modesMessage *mm) {
     } else {
         p += sprintf(p, "\"OnGround\":null,");
     }
+	
+	//
+    if (mm->bFlags & MODES_ACFLAGS_OP_STATUS_OK) {
+        p += sprintf(p, "\"NACp\":%d,", mm->nacp);
+    } else {
+	    p += sprintf(p, "\"NACp\":null,");
+    }
+	
 	
     //Squawk
     if (mm->bFlags & MODES_ACFLAGS_SQUAWK_VALID) {p += sprintf(p, "\"Squawk\":%x", mm->modeA);}
