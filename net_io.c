@@ -504,8 +504,8 @@ void modesSendStratuxOutput(struct modesMessage *mm) {
             {msgType = 3;}
         else
             {msgType = 7;}
-    } else if ((mm->metype == 31) || (mm->metype == 31)) {
-		msgType = 9; // new message type for operational status message
+    } else if ((mm->metype == 29) || (mm->metype == 31)) {
+		msgType = 9; // new message type for target state and operational status messages
     } else if (mm->metype !=  19) {
         return;
     } else if ((mm->mesub == 1) || (mm->mesub == 2)) {
@@ -559,27 +559,27 @@ void modesSendStratuxOutput(struct modesMessage *mm) {
 	}
 	
 	// Altitude
-	// TC 19 defines difference between pressure altitude and GNSS height
-	// TC 20-22 define GNSS height
-	// All other altitude messages are pressure altitude
-	if (mm->metype >= 20 && mm->metype <= 22) {
-		if ((mm->bFlags & MODES_ACFLAGS_AOG_GROUND) == MODES_ACFLAGS_AOG_GROUND) {
-			p += sprintf(p, "\"Alt\":null,\"GnssAlt\":0,");
-		} else if (mm->bFlags & MODES_ACFLAGS_ALTITUDE_VALID) {
-			p += sprintf(p, "\"Alt\":null,\"GnssAlt\":%d,",mm->altitude);
-		} else {
-			p += sprintf(p, "\"Alt\":null,\"GnssAlt\":null,");
-		}
+	if ((mm->bFlags & MODES_ACFLAGS_AOG_GROUND) == MODES_ACFLAGS_AOG_GROUND) {  
+        p += sprintf(p, "\"Alt\":0,");
+    } else if (mm->bFlags & MODES_ACFLAGS_ALTITUDE_VALID) {
+		p += sprintf(p, "\"Alt\":%d,",mm->altitude);
+    } else {
+		p += sprintf(p, "\"Alt\":null,");
+    }
+
+    // Altitude Source
+    if (mm->bFlags & MODES_ACFLAGS_GNSS_ALT_SOURCE) { // source is GNSS height, rather than pressure alt
+        p += sprintf(p, "\"GnssAlt\":true,");
 	} else {
-		if ((mm->bFlags & MODES_ACFLAGS_AOG_GROUND) == MODES_ACFLAGS_AOG_GROUND) {
-			p += sprintf(p, "\"Alt\":0,\"GnssAlt\":null,");
-		} else if (mm->bFlags & MODES_ACFLAGS_ALTITUDE_VALID) {
-			p += sprintf(p, "\"Alt\":%d,\"GnssAlt\":null,",mm->altitude);
-		} else {
-			p += sprintf(p, "\"Alt\":null,\"GnssAlt\":null,");
-		}
-	}
-	
+        p += sprintf(p, "\"GnssAlt\":false,");
+    }
+    // GNSS Alt Diff From Baro Alt
+    if (mm->bFlags & MODES_ACFLAGS_GNSS_ALT_DIFF_VALID) {
+        p += sprintf(p, "\"GnssDiffFromBaroAlt\":%d,", mm->diffHeightGNSS);
+    } else {
+        p += sprintf(p, "\"GnssDiffFromBaroAlt\":null,");
+    }
+    
 	//Vertical velocity
 	if (mm->bFlags & MODES_ACFLAGS_VERTRATE_VALID) {
 		p += sprintf(p, "\"Vvel\":%d,", mm->vert_rate);

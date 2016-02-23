@@ -127,24 +127,25 @@
 
 #define MODES_USER_LATLON_VALID (1<<0)
 
-#define MODES_ACFLAGS_LATLON_VALID   (1<<0)  // Aircraft Lat/Lon is decoded
-#define MODES_ACFLAGS_ALTITUDE_VALID (1<<1)  // Aircraft altitude is known
-#define MODES_ACFLAGS_HEADING_VALID  (1<<2)  // Aircraft heading is known
-#define MODES_ACFLAGS_SPEED_VALID    (1<<3)  // Aircraft speed is known
-#define MODES_ACFLAGS_VERTRATE_VALID (1<<4)  // Aircraft vertical rate is known
-#define MODES_ACFLAGS_SQUAWK_VALID   (1<<5)  // Aircraft Mode A Squawk is known
-#define MODES_ACFLAGS_CALLSIGN_VALID (1<<6)  // Aircraft Callsign Identity
-#define MODES_ACFLAGS_EWSPEED_VALID  (1<<7)  // Aircraft East West Speed is known
-#define MODES_ACFLAGS_NSSPEED_VALID  (1<<8)  // Aircraft North South Speed is known
-#define MODES_ACFLAGS_AOG            (1<<9)  // Aircraft is On the Ground
-#define MODES_ACFLAGS_LLEVEN_VALID   (1<<10) // Aircraft Even Lot/Lon is known
-#define MODES_ACFLAGS_LLODD_VALID    (1<<11) // Aircraft Odd Lot/Lon is known
-#define MODES_ACFLAGS_AOG_VALID      (1<<12) // MODES_ACFLAGS_AOG is valid
-#define MODES_ACFLAGS_FS_VALID       (1<<13) // Aircraft Flight Status is known
-#define MODES_ACFLAGS_NSEWSPD_VALID  (1<<14) // Aircraft EW and NS Speed is known
-#define MODES_ACFLAGS_LATLON_REL_OK  (1<<15) // Indicates it's OK to do a relative CPR
-#define MODES_ACFLAGS_OP_STATUS_OK   (1<<16) // Aircraft Operational Status is known
-
+#define MODES_ACFLAGS_LATLON_VALID     (1<<0)  // Aircraft Lat/Lon is decoded
+#define MODES_ACFLAGS_ALTITUDE_VALID   (1<<1)  // Aircraft altitude is known
+#define MODES_ACFLAGS_HEADING_VALID    (1<<2)  // Aircraft heading is known
+#define MODES_ACFLAGS_SPEED_VALID      (1<<3)  // Aircraft speed is known
+#define MODES_ACFLAGS_VERTRATE_VALID   (1<<4)  // Aircraft vertical rate is known
+#define MODES_ACFLAGS_SQUAWK_VALID     (1<<5)  // Aircraft Mode A Squawk is known
+#define MODES_ACFLAGS_CALLSIGN_VALID   (1<<6)  // Aircraft Callsign Identity
+#define MODES_ACFLAGS_EWSPEED_VALID    (1<<7)  // Aircraft East West Speed is known
+#define MODES_ACFLAGS_NSSPEED_VALID    (1<<8)  // Aircraft North South Speed is known
+#define MODES_ACFLAGS_AOG              (1<<9)  // Aircraft is On the Ground
+#define MODES_ACFLAGS_LLEVEN_VALID     (1<<10) // Aircraft Even Lot/Lon is known
+#define MODES_ACFLAGS_LLODD_VALID      (1<<11) // Aircraft Odd Lot/Lon is known
+#define MODES_ACFLAGS_AOG_VALID        (1<<12) // MODES_ACFLAGS_AOG is valid
+#define MODES_ACFLAGS_FS_VALID         (1<<13) // Aircraft Flight Status is known
+#define MODES_ACFLAGS_NSEWSPD_VALID    (1<<14) // Aircraft EW and NS Speed is known
+#define MODES_ACFLAGS_LATLON_REL_OK    (1<<15) // Indicates it's OK to do a relative CPR
+#define MODES_ACFLAGS_OP_STATUS_OK     (1<<16) // Aircraft Operational Status is known
+#define MODES_ACFLAGS_GNSS_ALT_SOURCE  (1<<17) // Aircraft altitude is GNSS height, not pressure altitude
+#define MODES_ACFLAGS_GNSS_ALT_DIFF_VALID (1<<18) // GNSS height differential from pressure altitude is known
 
 #define MODES_ACFLAGS_LLEITHER_VALID (MODES_ACFLAGS_LLEVEN_VALID | MODES_ACFLAGS_LLODD_VALID)
 #define MODES_ACFLAGS_LLBOTH_VALID   (MODES_ACFLAGS_LLEVEN_VALID | MODES_ACFLAGS_LLODD_VALID)
@@ -218,6 +219,7 @@ struct aircraft {
     long          modeCcount;     // Mode C Altitude hit Count
     int           modeACflags;    // Flags for mode A/C recognition
     int           nacp;           // Navigation Accuracy Category - Position. Extract from [DF=17, TC=31] or [DF=18, TC=19]
+	int           diffHeightGNSS; // GNSS altitude difference from baro altitude (DF=17 TC=19)
 
     // Encoded latitude and longitude as extracted by odd and even CPR encoded messages
     int           odd_cprlat;
@@ -413,6 +415,7 @@ struct modesMessage {
     int    vert_rate;           // Vertical rate.
     int    velocity;            // Reported by aircraft, or computed from from EW and NS velocity
     int    nacp;                // Navigation Accuracy Category - Position. Extract from [DF=17, TC=31] or [DF=18, TC=19]
+	int    diffHeightGNSS;      // GNSS altitude difference from baro altitude (DF=17 TC=19)
 
     // DF4, DF5, DF20, DF21
     int  fs;                    // Flight status for DF4,5,20,21

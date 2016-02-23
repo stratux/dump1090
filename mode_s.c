@@ -1001,7 +1001,24 @@ void decodeModesMessage(struct modesMessage *mm, unsigned char *msg) {
                     mm->bFlags   |= MODES_ACFLAGS_VERTRATE_VALID;
                 }
             }
+			
+			if (mm->msgtype == 18) { // NACp for TIS-B 
+			    mm->bFlags |= MODES_ACFLAGS_OP_STATUS_OK;
+			    mm->nacp = (msg[5] >> 3) & 0x0F;
+			}
 
+			if ((mm->msgtype == 17) || ((mm->msgtype == 18) && (msg[8] & 0x10))) { // 
+			    if (msg[10] & 0x7F) { // 
+					mm->bFlags |= MODES_ACFLAGS_GNSS_ALT_DIFF_VALID;
+					int diffHeight = (msg[10] & 0x7F) -1;
+					diffHeight *= 25;
+					if (msg[10] & 0x80) {
+						diffHeight = -diffHeight;
+					}
+					mm->diffHeightGNSS = diffHeight;
+				}
+			}
+			
             if ((mesub == 1) || (mesub == 2)) {
                 int ew_raw = ((msg[5] & 0x03) << 8) |  msg[6];
                 int ew_vel = ew_raw - 1;
@@ -1103,8 +1120,7 @@ void decodeModesMessage(struct modesMessage *mm, unsigned char *msg) {
 
         } else if (metype == 29) { // Aircraft Trajectory Intent
 			mm->bFlags |= MODES_ACFLAGS_OP_STATUS_OK;
-			mm->nacp = (((msg[8] << 3) || (msg[9] >> 5)) &0x0F);
-		
+			mm->nacp = (((msg[8] << 3) | (msg[9] >> 5)) &0x0F);
 		
         } else if (metype == 30) { // Aircraft Operational Coordination
 
@@ -1112,10 +1128,6 @@ void decodeModesMessage(struct modesMessage *mm, unsigned char *msg) {
 			mm->bFlags |= MODES_ACFLAGS_OP_STATUS_OK;
 			mm->nacp = (msg[9] & 0x0F);
 		        
-		} else if ((mm->msgtype == 18) && (metype == 19)) { // TIS-B velocity message reports NACp
-			mm->bFlags |= MODES_ACFLAGS_OP_STATUS_OK;
-			mm->nacp = (msg[5] >> 3) & 0x0F;
-		
 		} else { // Other metypes
 
         }
@@ -1316,6 +1328,10 @@ void displayModesMessage(struct modesMessage *mm) {
             } else {
                 printf("    Unrecognized ME subtype: %d subtype: %d\n", mm->metype, mm->mesub);
             }
+			
+			if (mm->bFlags & MODES_ACFLAGS_GNSS_ALT_DIFF_VALID) {
+				printf("    GNSS height vs alt: %d\n", mm->diffHeightGNSS);
+			}
 
         } else if (mm->metype >= 5 && mm->metype <= 22) { // Airborne position Baro
             printf("    F flag   : %s\n", (mm->msg[6] & 0x04) ? "odd" : "even");
@@ -1330,21 +1346,15 @@ void displayModesMessage(struct modesMessage *mm) {
             }
 
         } else if (mm->metype == 31) { // Extended Squitter Operational Status
-            if (mm->mesub == 1) {
-				printf("    Type %s report\n", (mm->mesub & 0x01) ? "Surface" : "Airborne");
-				printf("    Type NACp = %d\n", mm->nacp);
+            if (mm->mesub < 2) {
+				printf("    %s report\n", (mm->mesub & 0x01) ? "Surface" : "Airborne");
+				printf("    NACp = %d\n", mm->nacp);
 		    } else {
                 printf("    Unrecognized ME subtype: %d subtype: %d\n", mm->metype, mm->mesub);
             }
 			
-			
 		} else if (mm->metype == 29) { // Extended Squitter Target State and Status
-                if (mm->bFlags & MODES_ACFLAGS_OP_STATUS_OK) {
-					printf("    OK flag Type NACp = %d\n", mm->nacp);
-				} else {
-					printf("    Not OK flag Type NACp = %d\n", mm->nacp);
-					printf("\"NACp\":%d,", mm->nacp);
-		        }
+			printf("    NACp = %d\n", mm->nacp);
 				
         } else if (mm->metype == 28) { // Extended Squitter Aircraft Status
             if (mm->mesub == 1) {
