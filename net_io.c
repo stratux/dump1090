@@ -475,7 +475,7 @@ void modesSendSBSOutput(struct modesMessage *mm) {
 // Stratux traffic structure.
 //
 void modesSendStratuxOutput(struct modesMessage *mm) {
-    char msg[2048], *p = msg;
+    char msg[1024], *p = msg;
     uint32_t     offset;
     struct timeb epocTime_receive, epocTime_now;
     struct tm    stTime_receive, stTime_now;
@@ -525,6 +525,10 @@ void modesSendStratuxOutput(struct modesMessage *mm) {
 		p += sprintf(p, "\"Tail\":null,");
 	}
 	
+    //Squawk
+    if (mm->bFlags & MODES_ACFLAGS_SQUAWK_VALID) {p += sprintf(p, "\"Squawk\":%x,", mm->modeA);}
+    else                                         {p += sprintf(p, "\"Squawk\":null,");}
+    
 	// Emitter type
 	int emitter = 0;
 	int setEmitter = 0;
@@ -551,13 +555,31 @@ void modesSendStratuxOutput(struct modesMessage *mm) {
 		p += sprintf(p, "\"Emitter_category\":null,");
 	}
 	
-	// Position and position valid flag
+    // OnGround
+    if (mm->bFlags & MODES_ACFLAGS_AOG_VALID) {
+        if (mm->bFlags & MODES_ACFLAGS_AOG) {
+            p += sprintf(p, "\"OnGround\":true,");
+        } else {
+            p += sprintf(p, "\"OnGround\":false,");
+        }
+    } else {
+        p += sprintf(p, "\"OnGround\":null,");
+    }
+
+    // Position and position valid flag
 	if (mm->bFlags & MODES_ACFLAGS_LATLON_VALID) {
 		p += sprintf(p, "\"Lat\":%.6f,\"Lng\":%.6f,\"Position_valid\":true,",mm->fLat, mm->fLon);
 	} else {
 		p += sprintf(p, "\"Lat\":null,\"Lng\":null,\"Position_valid\":false,");
 	}
 	
+    // Navigation Accuracy Category - Position
+    if (mm->bFlags & MODES_ACFLAGS_OP_STATUS_OK) {
+        p += sprintf(p, "\"NACp\":%d,", mm->nacp);
+    } else {
+	    p += sprintf(p, "\"NACp\":null,");
+    }
+    
 	// Altitude
 	if ((mm->bFlags & MODES_ACFLAGS_AOG_GROUND) == MODES_ACFLAGS_AOG_GROUND) {  
         p += sprintf(p, "\"Alt\":0,");
@@ -567,11 +589,11 @@ void modesSendStratuxOutput(struct modesMessage *mm) {
 		p += sprintf(p, "\"Alt\":null,");
     }
 
-    // Altitude Source
-    if (mm->bFlags & MODES_ACFLAGS_GNSS_ALT_SOURCE) { // source is GNSS height, rather than pressure alt
-        p += sprintf(p, "\"GnssAlt\":true,");
+    // Altitude Source. True if altitude source is GNSS, false if pressure altitude.
+    if (mm->bFlags & MODES_ACFLAGS_GNSS_ALT_SOURCE) { 
+        p += sprintf(p, "\"AltIsGNSS\":true,");
 	} else {
-        p += sprintf(p, "\"GnssAlt\":false,");
+        p += sprintf(p, "\"AltIsGNSS\":false,");
     }
     // GNSS Alt Diff From Baro Alt
     if (mm->bFlags & MODES_ACFLAGS_GNSS_ALT_DIFF_VALID) {
@@ -620,32 +642,9 @@ void modesSendStratuxOutput(struct modesMessage *mm) {
         stTime_receive = stTime_now;
     }
 
-	//Time message received (based on RPi clock). Format is 2016-02-20T06:35:43.155Z
-	p += sprintf(p, "\"Timestamp\":\"%04d-%02d-%02dT%02d:%02d:%02d.%03dZ\",", (stTime_receive.tm_year+1900),(stTime_receive.tm_mon+1), stTime_receive.tm_mday, stTime_receive.tm_hour, stTime_receive.tm_min, stTime_receive.tm_sec, epocTime_receive.millitm);
+	//Time message received (based on system clock). Format is 2016-02-20T06:35:43.155Z
+	p += sprintf(p, "\"Timestamp\":\"%04d-%02d-%02dT%02d:%02d:%02d.%03dZ\"", (stTime_receive.tm_year+1900),(stTime_receive.tm_mon+1), stTime_receive.tm_mday, stTime_receive.tm_hour, stTime_receive.tm_min, stTime_receive.tm_sec, epocTime_receive.millitm);
 	
-	// OnGround
-    if (mm->bFlags & MODES_ACFLAGS_AOG_VALID) {
-        if (mm->bFlags & MODES_ACFLAGS_AOG) {
-            p += sprintf(p, "\"OnGround\":true,");
-        } else {
-            p += sprintf(p, "\"OnGround\":false,");
-        }
-    } else {
-        p += sprintf(p, "\"OnGround\":null,");
-    }
-	
-	//
-    if (mm->bFlags & MODES_ACFLAGS_OP_STATUS_OK) {
-        p += sprintf(p, "\"NACp\":%d,", mm->nacp);
-    } else {
-	    p += sprintf(p, "\"NACp\":null,");
-    }
-	
-	
-    //Squawk
-    if (mm->bFlags & MODES_ACFLAGS_SQUAWK_VALID) {p += sprintf(p, "\"Squawk\":%x", mm->modeA);}
-    else                                         {p += sprintf(p, "\"Squawk\":null");}
-
     p += sprintf(p, "}\r\n");
     modesSendAllClients(Modes.stratuxos, msg, p-msg);
 }
