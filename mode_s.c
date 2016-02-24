@@ -76,6 +76,7 @@ int modesMessageLenByType(int type) {
     return (type & 0x10) ? MODES_LONG_MSG_BITS : MODES_SHORT_MSG_BITS ;
 }
 
+
 //
 //=========================================================================
 //
@@ -855,11 +856,18 @@ static void decodeExtendedSquitter(struct modesMessage *mm)
             }
         }
 
-        if (msg[10] != 0) {
+        if ((msg[10] != 0) && ((mm->msgtype == 17) || ((mm->msgtype == 18) && (msg[8] & 0x10)))) { // ADS-R only transmits HAE if 'geo flag' is set
             mm->bFlags |= MODES_ACFLAGS_HAE_DELTA_VALID;
             mm->hae_delta = ((msg[10] & 0x80) ? -25 : 25) * ((msg[10] & 0x7f) - 1);
         }
 
+        if (mm->msgtype == 18) { // NACp for TIS-B only
+		    mm->bFlags |= MODES_ACFLAGS_OP_STATUS_VALID;
+		    mm->nacp = (msg[5] >> 3) & 0x0F;
+		}
+        
+        
+        
         break;
     }
         
@@ -869,6 +877,7 @@ static void decodeExtendedSquitter(struct modesMessage *mm)
 
         if (check_imf && (msg[6] & 0x08))
             mm->addr |= MODES_NON_ICAO_ADDRESS;
+
 
         mm->bFlags |= MODES_ACFLAGS_AOG_VALID | MODES_ACFLAGS_AOG;
         mm->raw_latitude  = ((msg[6] & 3) << 15) | (msg[7] << 7) | (msg[8] >> 1);
@@ -899,11 +908,13 @@ static void decodeExtendedSquitter(struct modesMessage *mm)
         if (check_imf && (msg[4] & 0x01))
             mm->addr |= MODES_NON_ICAO_ADDRESS;
 
+
         mm->bFlags |= MODES_ACFLAGS_AOG_VALID;
 
         if (metype != 0) {
             // Catch some common failure modes and don't mark them as valid
             // (so they won't be used for positioning)
+
 
             mm->raw_latitude  = ((msg[6] & 3) << 15) | (msg[7] << 7) | (msg[8] >> 1);
             mm->raw_longitude = ((msg[8] & 1) << 16) | (msg[9] << 8) | (msg[10]);
@@ -977,12 +988,16 @@ static void decodeExtendedSquitter(struct modesMessage *mm)
     }
 
     case 29: // Aircraft Trajectory Intent
+		mm->bFlags |= MODES_ACFLAGS_OP_STATUS_VALID;
+		mm->nacp = (((msg[8] << 3) | (msg[9] >> 5)) &0x0F);    
         break;
 
     case 30: // Aircraft Operational Coordination
         break;
 
     case 31: // Aircraft Operational Status
+		mm->bFlags |= MODES_ACFLAGS_OP_STATUS_VALID;
+		mm->nacp = (msg[9] & 0x0F);
         if (check_imf && (msg[10] & 0x01))
             mm->addr |= MODES_NON_ICAO_ADDRESS;
         break;
@@ -1074,6 +1089,16 @@ static void displayExtendedSquitter(struct modesMessage *mm) {
         } else {
             printf("    Unrecognized ME subtype: %d subtype: %d\n", mm->metype, mm->mesub);
         }
+    } else if (mm->metype == 31) { // Extended Squitter Operational Status
+        if (mm->mesub < 2) {
+            printf("    %s report\n", (mm->mesub & 0x01) ? "Surface" : "Airborne");
+			printf("    NACp = %d\n", mm->nacp);
+		} else {
+            printf("    Unrecognized ME subtype: %d subtype: %d\n", mm->metype, mm->mesub);
+        }
+ 	} else if (mm->metype == 29) { // Extended Squitter Target State and Status
+		printf("    NACp = %d\n", mm->nacp);   
+        
     } else if (mm->metype == 23) { // Test Message
         if (mm->mesub == 7) {
             printf("    Squawk: %04x\n", mm->modeA);
@@ -1283,6 +1308,7 @@ void useModesMessage(struct modesMessage *mm) {
         }
     }
 }
+
 
 //
 // ===================== Mode S detection and decoding  ===================

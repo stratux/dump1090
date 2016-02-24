@@ -52,7 +52,7 @@
 
 // Default version number, if not overriden by the Makefile
 #ifndef MODES_DUMP1090_VERSION
-# define MODES_DUMP1090_VERSION     "v1.13-custom"
+# define MODES_DUMP1090_VERSION     "v1.13-stratux"
 #endif
 
 #ifndef MODES_DUMP1090_VARIANT
@@ -166,6 +166,7 @@ typedef struct rtlsdr_dev rtlsdr_dev_t;
 #define MODES_ACFLAGS_ALTITUDE_HAE_VALID (1<<19) // altitude_hae is valid
 #define MODES_ACFLAGS_HAE_DELTA_VALID    (1<<20) // hae_delta is valid
 #define MODES_ACFLAGS_FROM_TISB      (1<<21) // Data was derived from TIS-B messages
+#define MODES_ACFLAGS_OP_STATUS_VALID  (1<<22) // Aircraft Operational Status is known (ES TC29/31)
 
 #define MODES_ACFLAGS_LLEITHER_VALID (MODES_ACFLAGS_LLEVEN_VALID | MODES_ACFLAGS_LLODD_VALID)
 #define MODES_ACFLAGS_LLBOTH_VALID   (MODES_ACFLAGS_LLEVEN_VALID | MODES_ACFLAGS_LLODD_VALID)
@@ -247,6 +248,7 @@ struct {                             // Internal state
     unsigned        trailing_samples;                     // extra trailing samples in magnitude buffers
     double          sample_rate;                          // actual sample rate in use (in hz)
 
+
     int             fd;              // --ifile option file descriptor
     input_format_t  input_format;    // --iformat option
     uint16_t       *maglut;          // I/Q -> Magnitude lookup table
@@ -275,6 +277,7 @@ struct {                             // Internal state
     struct net_writer raw_out;       // Raw output
     struct net_writer beast_out;     // Beast-format output
     struct net_writer sbs_out;       // SBS-format output
+    struct net_writer stratux_out;   // Stratux-format output
     struct net_writer fatsv_out;     // FATSV-format output
 
 #ifdef _WIN32
@@ -298,6 +301,7 @@ struct {                             // Internal state
     char *net_output_raw_ports;      // List of raw output TCP ports
     char *net_input_raw_ports;       // List of raw input TCP ports
     char *net_output_sbs_ports;      // List of SBS output TCP ports
+    char *net_output_stratux_ports;  // List of Stratux output TCP ports
     char *net_input_beast_ports;     // List of Beast input TCP ports
     char *net_output_beast_ports;    // List of Beast output TCP ports
     char *net_http_ports;            // List of HTTP ports
@@ -337,6 +341,7 @@ struct {                             // Internal state
 
     // State tracking
     struct aircraft *aircrafts;
+
 
     // Statistics
     struct stats stats_current;
@@ -385,6 +390,7 @@ struct modesMessage {
     unsigned category;          // A0 - D7 encoded as a single hex byte
     int    altitude_hae;        // altitude reported as GNSS HAE
     int    hae_delta;           // difference between HAE and baro alt
+    int    nacp;                // Navigation Accuracy Category - Position. Extract from [DF=17, TC=31] or [DF=18, TC=19]
 
     // DF 18
     int    cf;                  // Control Field

@@ -74,6 +74,7 @@ static int handleHTTPRequest(struct client *c, char *p);
 static void send_raw_heartbeat(struct net_service *service);
 static void send_beast_heartbeat(struct net_service *service);
 static void send_sbs_heartbeat(struct net_service *service);
+static void send_stratux_heartbeat(struct net_service *service);
 
 //
 //=========================================================================
@@ -252,6 +253,9 @@ void modesInitNet(void) {
     s = serviceInit("Basestation TCP output", &Modes.sbs_out, send_sbs_heartbeat, NULL, NULL);
     serviceListen(s, Modes.net_bind_address, Modes.net_output_sbs_ports);
 
+    s = serviceInit("Stratux TCP output", &Modes.stratux_out, send_stratux_heartbeat, NULL, NULL);
+    serviceListen(s, Modes.net_bind_address, Modes.net_output_stratux_ports);
+    
     s = serviceInit("Raw TCP input", NULL, NULL, "\n", decodeHexMessage);
     serviceListen(s, Modes.net_bind_address, Modes.net_input_raw_ports);
 
@@ -478,7 +482,6 @@ static void send_raw_heartbeat(struct net_service *service)
     memcpy(data, heartbeat_message, len);
     completeWrite(service->writer, data + len);
 }
-
 //
 //=========================================================================
 //
@@ -664,6 +667,205 @@ static void send_sbs_heartbeat(struct net_service *service)
     completeWrite(service->writer, data + len);
 }
 
+////////////////////////////////////////// Start Stratux block 
+
+//
+//=========================================================================
+//
+// Write Stratux output to TCP clients
+// The message structure mm->bFlags tells us what has been updated by this message
+//
+// Output format is a JSON representation of a subset of the fields used in the
+// Stratux traffic structure.
+//
+static void modesSendStratuxOutput(struct modesMessage *mm, struct aircraft *a) {
+    char *p;
+    struct timespec now;
+    struct tm    stTime_receive, stTime_now;
+    int          msgType;
+
+    // Send all addresses, since we want to see TIS-B data.
+    //if (mm->addr & MODES_NON_ICAO_ADDRESS)
+    //    return;
+
+    p = prepareWrite(&Modes.stratux_out, 1000); // larger buffer size needed vs SBS
+    if (!p)
+        return;
+
+    
+    // Decide on the basic SBS Message Type
+    if        ((mm->msgtype ==  4) || (mm->msgtype == 20)) {
+        msgType = 5;
+    } else if ((mm->msgtype ==  5) || (mm->msgtype == 21)) {
+        msgType = 6;
+    } else if ((mm->msgtype ==  0) || (mm->msgtype == 16)) {
+        msgType = 7;
+    } else if  (mm->msgtype == 11) {
+        msgType = 8;
+    } else if ((mm->msgtype != 17) && (mm->msgtype != 18)) {
+        return;
+    } else if ((mm->metype >= 1) && (mm->metype <=  4)) {
+        msgType = 1;
+    } else if ((mm->metype >= 5) && (mm->metype <=  8)) {
+        if (mm->bFlags & MODES_ACFLAGS_LATLON_VALID)
+            {msgType = 2;}
+        else
+            {msgType = 7;}
+    } else if ((mm->metype >= 9) && (mm->metype <= 18)) {
+        if (mm->bFlags & MODES_ACFLAGS_LATLON_VALID)
+            {msgType = 3;}
+        else
+            {msgType = 7;}
+    } else if ((mm->metype == 29) || (mm->metype == 31)) {
+		msgType = 9; // new message type for target state and operational status messages
+    } else if (mm->metype !=  19) {
+        return;
+    } else if ((mm->mesub == 1) || (mm->mesub == 2)) {
+        msgType = 4;
+    } else {
+        return;
+    }
+
+    // Begin populating the traffic.go fields.
+	// ICAO address, Mode S message types, and signal level
+	p += sprintf(p, "{\"Icao_addr\":%d,\"DF\":%d,\"CA\":%d,\"TypeCode\":%d,\"SubtypeCode\":%d,\"SBS_MsgType\":%d,\"SignalLevel\":%f,",mm->addr, mm->msgtype, mm->ca, mm->metype,  mm->mesub, msgType, mm->signalLevel); // what precision and range is needed for RSSI?
+    
+ 	// Callsign
+	if (mm->bFlags & MODES_ACFLAGS_CALLSIGN_VALID) {
+		p += sprintf(p, "\"Tail\":\"%s\",", mm->flight);
+	} else {
+		p += sprintf(p, "\"Tail\":null,");
+	}   
+    
+    //Squawk
+    if (mm->bFlags & MODES_ACFLAGS_SQUAWK_VALID) {p += sprintf(p, "\"Squawk\":%x,", mm->modeA);}
+    else                                         {p += sprintf(p, "\"Squawk\":null,");}    
+    
+    // Emitter type
+	int emitter = 0;
+	int setEmitter = 0;
+	if ((mm->msgtype ==  17) || (mm->msgtype = 18)) {
+		switch (mm->metype) {
+			case 1:
+				emitter = ((mm->mesub) | 0x18);
+				setEmitter = 1;
+			case 2:
+				emitter = ((mm->mesub) | 0x10);
+				setEmitter = 1;
+			case 3:
+				emitter = ((mm->mesub) | 0x08);
+				setEmitter = 1;
+			case 4:
+				emitter = (mm->mesub);
+				setEmitter = 1;
+		}
+	}
+	
+	if (setEmitter) {
+		p += sprintf(p, "\"Emitter_category\":%d,", emitter);
+	} else {
+		p += sprintf(p, "\"Emitter_category\":null,");
+	}
+    
+    // OnGround
+    if (mm->bFlags & MODES_ACFLAGS_AOG_VALID) {
+        if (mm->bFlags & MODES_ACFLAGS_AOG) {
+            p += sprintf(p, "\"OnGround\":true,");
+        } else {
+            p += sprintf(p, "\"OnGround\":false,");
+        }
+    } else {
+        p += sprintf(p, "\"OnGround\":null,");
+    }
+    
+    // Position and position valid flag
+	if (mm->bFlags & MODES_ACFLAGS_LATLON_VALID) {
+		p += sprintf(p, "\"Lat\":%.6f,\"Lng\":%.6f,\"Position_valid\":true,",mm->fLat, mm->fLon);
+	} else {
+		p += sprintf(p, "\"Lat\":null,\"Lng\":null,\"Position_valid\":false,");
+	}
+	
+    // Navigation Accuracy Category - Position
+    if (mm->bFlags & MODES_ACFLAGS_OP_STATUS_VALID) {
+        p += sprintf(p, "\"NACp\":%d,", mm->nacp);
+    } else {
+	    p += sprintf(p, "\"NACp\":null,");
+    }  
+    
+	// Altitude
+	if ((mm->bFlags & MODES_ACFLAGS_AOG_GROUND) == MODES_ACFLAGS_AOG_GROUND) {  
+        p += sprintf(p, "\"Alt\":0,");
+    } else if (mm->bFlags & MODES_ACFLAGS_ALTITUDE_VALID) {
+		p += sprintf(p, "\"Alt\":%d,",mm->altitude);
+    } else {
+		p += sprintf(p, "\"Alt\":null,");
+    }
+    
+    // Altitude Source. True if altitude source is GNSS, false if pressure altitude.
+    if (mm->bFlags & MODES_ACFLAGS_ALTITUDE_HAE_VALID) { 
+        p += sprintf(p, "\"AltIsGNSS\":true,");
+	} else {
+        p += sprintf(p, "\"AltIsGNSS\":false,");
+    }
+    // GNSS Alt Diff From Baro Alt
+    if (mm->bFlags & MODES_ACFLAGS_HAE_DELTA_VALID) {
+        p += sprintf(p, "\"GnssDiffFromBaroAlt\":%d,",a->hae_delta);    // Verify that this is part of a and not mm
+    } else {
+        p += sprintf(p, "\"GnssDiffFromBaroAlt\":null,");
+    }    
+    
+ 	//Vertical velocity
+	if (mm->bFlags & MODES_ACFLAGS_VERTRATE_VALID) {
+		p += sprintf(p, "\"Vvel\":%d,", mm->vert_rate);
+	} else {
+		p += sprintf(p,  "\"Vvel\":null,");
+	} 
+
+	// Ground speed and track
+    if (mm->bFlags & MODES_ACFLAGS_SPEED_VALID) {
+        p += sprintf(p, "\"Speed_valid\":true,\"Speed\":%d,", mm->velocity);
+    } else {
+        p += sprintf(p, "\"Speed_valid\":false,\"Speed\":null,"); 
+    }
+
+    if (mm->bFlags & MODES_ACFLAGS_HEADING_VALID) {
+        p += sprintf(p, "\"Track\":%d,", mm->heading);
+    } else {
+        p += sprintf(p, "\"Track\":null,");
+    }
+
+    // Find current system time
+    clock_gettime(CLOCK_REALTIME, &now);
+    gmtime_r(&now.tv_sec, &stTime_now);  // we expect UTC 
+
+    // Find message reception time
+    gmtime_r(&mm->sysTimestampMsg.tv_sec, &stTime_receive); // we expect UTC
+
+    //Time message received (based on system clock). Format is 2016-02-20T06:35:43.155Z
+	p += sprintf(p, "\"Timestamp\":\"%04d-%02d-%02dT%02d:%02d:%02d.%03dZ\"", (stTime_receive.tm_year+1900),(stTime_receive.tm_mon+1), stTime_receive.tm_mday, stTime_receive.tm_hour, stTime_receive.tm_min, stTime_receive.tm_sec, (unsigned) (mm->sysTimestampMsg.tv_nsec / 1000000U));
+    
+    p += sprintf(p, "}\r\n");
+
+    completeWrite(&Modes.stratux_out, p);
+}
+
+static void send_stratux_heartbeat(struct net_service *service)
+{
+    static char *heartbeat_message = "\r\n";  // need to validate that this won't cause problems with traffic.go
+    char *data;
+    int len = strlen(heartbeat_message);
+
+    if (!service->writer)
+        return;
+
+    data = prepareWrite(service->writer, len);
+    if (!data)
+        return;
+
+    memcpy(data, heartbeat_message, len);
+    completeWrite(service->writer, data + len);
+}
+
 //
 //=========================================================================
 //
@@ -672,6 +874,7 @@ void modesQueueOutput(struct modesMessage *mm, struct aircraft *a) {
 
     if (!is_mlat) {
         modesSendSBSOutput(mm, a);
+        modesSendStratuxOutput(mm, a);
         modesSendRawOutput(mm);
     }
 
@@ -1370,6 +1573,7 @@ static int handleHTTPRequest(struct client *c, char *p) {
             rp[0] = 0;
         if (!realpath(Modes.html_dir, hrp))
             strcpy(hrp, Modes.html_dir);
+
 
         clen = -1;
         content = strdup("Server error occured");

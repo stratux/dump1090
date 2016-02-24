@@ -150,6 +150,7 @@ void modesInitConfig(void) {
     Modes.net_output_sbs_ports    = strdup("30003");
     Modes.net_input_beast_ports   = strdup("30004,30104");
     Modes.net_output_beast_ports  = strdup("30005");
+    Modes.net_output_stratux_ports= strdup("30006");
     Modes.net_http_ports          = strdup("8080");
     Modes.interactive_rows        = getTermRows();
     Modes.interactive_display_ttl = MODES_INTERACTIVE_DISPLAY_TTL;
@@ -687,6 +688,7 @@ void showHelp(void) {
 "--net-sbs-port <ports>   TCP BaseStation output listen ports (default: 30003)\n"
 "--net-bi-port <ports>    TCP Beast input listen ports  (default: 30004,30104)\n"
 "--net-bo-port <ports>    TCP Beast output listen ports (default: 30005)\n"
+"--net-stratux-port <ports>   TCP Stratux output listen ports (default: 30006)\n"
 "--net-ro-size <size>     TCP output minimum size (default: 0)\n"
 "--net-ro-interval <rate> TCP output memory flush rate in seconds (default: 0)\n"
 "--net-heartbeat <rate>   TCP heartbeat rate in seconds (default: 60 sec; 0 to disable)\n"
@@ -999,6 +1001,9 @@ int main(int argc, char **argv) {
         } else if (!strcmp(argv[j],"--net-sbs-port") && more) {
             free(Modes.net_output_sbs_ports);
             Modes.net_output_sbs_ports = strdup(argv[++j]);
+        } else if (!strcmp(argv[j],"--net-stratux-port") && more) {
+            free(Modes.net_output_stratux_ports);
+            Modes.net_output_stratux_ports = strdup(argv[++j]);
         } else if (!strcmp(argv[j],"--net-buffer") && more) {
             Modes.net_sndbuf_size = atoi(argv[++j]);
         } else if (!strcmp(argv[j],"--net-verbatim")) {
