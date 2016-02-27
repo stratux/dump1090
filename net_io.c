@@ -851,7 +851,7 @@ static void modesSendStratuxOutput(struct modesMessage *mm, struct aircraft *a) 
 
 static void send_stratux_heartbeat(struct net_service *service)
 {
-    static char *heartbeat_message = "\r\n";  // need to validate that this won't cause problems with traffic.go
+    static char *heartbeat_message = "{\"Icao_addr\":134217727}\r\n";  // 0x07FFFFFF. Overflows 24-bit ICAO to signal invalic #, need to validate that this won't cause problems with traffic.go
     char *data;
     int len = strlen(heartbeat_message);
 
