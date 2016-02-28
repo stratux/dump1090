@@ -728,7 +728,15 @@ static void modesSendStratuxOutput(struct modesMessage *mm, struct aircraft *a) 
 
     // Begin populating the traffic.go fields.
 	// ICAO address, Mode S message types, and signal level
-	p += sprintf(p, "{\"Icao_addr\":%d,\"DF\":%d,\"CA\":%d,\"TypeCode\":%d,\"SubtypeCode\":%d,\"SBS_MsgType\":%d,\"SignalLevel\":%f,",mm->addr, mm->msgtype, mm->ca, mm->metype,  mm->mesub, msgType, mm->signalLevel); // what precision and range is needed for RSSI?
+    
+    int cacf = 0; // overload the JSON "CA" field to report CA (DF11 or DF17), CF (DF18), or zero (all other DF types)
+    if ((mm->msgtype == 11) || (mm->msgtype == 17)) {
+        cacf = mm->ca;
+    } else if (mm->msgtype == 18) {
+        cacf = mm->cf;
+    }
+    
+	p += sprintf(p, "{\"Icao_addr\":%d,\"DF\":%d,\"CA\":%d,\"TypeCode\":%d,\"SubtypeCode\":%d,\"SBS_MsgType\":%d,\"SignalLevel\":%f,",mm->addr, mm->msgtype, cacf, mm->metype,  mm->mesub, msgType, mm->signalLevel); // what precision and range is needed for RSSI?
     
  	// Callsign
 	if (mm->bFlags & MODES_ACFLAGS_CALLSIGN_VALID) {
