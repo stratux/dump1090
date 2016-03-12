@@ -377,6 +377,7 @@ static void modesSendBeastOutput(struct modesMessage *mm) {
     char *p = prepareWrite(&Modes.beast_out, 2 + 2 * (7 + msgLen));
     char ch;
     int  j;
+    int sig;
     unsigned char *msg = (Modes.net_verbatim ? mm->verbatim : mm->msg);
 
     if (!p)
@@ -406,7 +407,12 @@ static void modesSendBeastOutput(struct modesMessage *mm) {
     *p++ = (ch = (mm->timestampMsg));
     if (0x1A == ch) {*p++ = ch; }
 
-    *p++ = ch = (char) round(sqrt(mm->signalLevel) * 255);
+    sig = round(sqrt(mm->signalLevel) * 255);
+    if (mm->signalLevel > 0 && sig < 1)
+        sig = 1;
+    if (sig > 255)
+        sig = 255;
+    *p++ = ch = (char)sig;
     if (0x1A == ch) {*p++ = ch; }
 
     for (j = 0; j < msgLen; j++) {
@@ -880,13 +886,22 @@ static void send_stratux_heartbeat(struct net_service *service)
 void modesQueueOutput(struct modesMessage *mm, struct aircraft *a) {
     int is_mlat = ((mm->bFlags & MODES_ACFLAGS_FROM_MLAT) != 0);
 
-    if (!is_mlat) {
+    if (!is_mlat && mm->correctedbits < 2) {
+        // Don't ever forward 2-bit-corrected messages via SBS or Stratux output.
+        // Don't ever forward mlat messages via SBS output.
         modesSendSBSOutput(mm, a);
         modesSendStratuxOutput(mm, a);
+    }
+
+    if (!is_mlat && (Modes.net_verbatim || mm->correctedbits < 2)) {
+        // Forward 2-bit-corrected messages via raw output only if --net-verbatim is set
+        // Don't ever forward mlat messages via raw output.
         modesSendRawOutput(mm);
     }
 
-    if (!is_mlat || Modes.forward_mlat) {
+    if ((!is_mlat || Modes.forward_mlat) && (Modes.net_verbatim || mm->correctedbits < 2)) {
+        // Forward 2-bit-corrected messages via beast output only if --net-verbatim is set
+        // Forward mlat messages via beast output only if --forward-mlat is set
         modesSendBeastOutput(mm);
     }
 }
@@ -940,8 +955,8 @@ static int decodeBinMessage(struct client *c, char *p) {
         clock_gettime(CLOCK_REALTIME, &mm.sysTimestampMsg);
 
         ch = *p++;  // Grab the signal level
-        mm.signalLevel = ((unsigned char)ch / 256.0);
-        mm.signalLevel = mm.signalLevel * mm.signalLevel + 1e-5;
+        mm.signalLevel = ((unsigned char)ch / 255.0);
+        mm.signalLevel = mm.signalLevel * mm.signalLevel;
         if (0x1A == ch) {p++;}
 
         for (j = 0; j < msgLen; j++) { // and the data
@@ -1008,7 +1023,7 @@ static int decodeHexMessage(struct client *c, char *hex) {
     // Mark messages received over the internet as remote so that we don't try to
     // pass them off as being received by this instance when forwarding them
     mm.remote      =    1;
-    mm.signalLevel =    1e-5;
+    mm.signalLevel =    0;
 
     // Remove spaces on the left and on the right
     while(l && isspace(hex[l-1])) {
@@ -1025,8 +1040,8 @@ static int decodeHexMessage(struct client *c, char *hex) {
 
     switch(hex[0]) {
         case '<': {
-            mm.signalLevel = ((hexDigitVal(hex[13])<<4) | hexDigitVal(hex[14])) / 256.0;
-            mm.signalLevel = mm.signalLevel * mm.signalLevel + 1e-5;
+            mm.signalLevel = ((hexDigitVal(hex[13])<<4) | hexDigitVal(hex[14])) / 255.0;
+            mm.signalLevel = mm.signalLevel * mm.signalLevel;
             hex += 15; l -= 16; // Skip <, timestamp and siglevel, and ;
             break;}
 
