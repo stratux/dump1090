@@ -341,6 +341,3 @@ The original version of dump1090 was written by Salvatore Sanfilippo
 
 This modified version of dump1090 is maintained by Oliver Jowett
 <oliver@mutability.co.uk> and is released under the GPL (v2 or later).
-
-Enhancements for Stratux written by AvSquirrel (https://github.com/AvSquirrel)
-and released under the GPL (v2 or later)

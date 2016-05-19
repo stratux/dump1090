@@ -5,8 +5,6 @@ This is a fork of MalcolmRobb's version of dump1090
 that adds new functionality and is designed to be built as
 a Debian/Raspbian package.
 
-Support for Stratux port 30006 JSON added by AvSquirrel
-
 This version is licensed under the GPL (v2 or later).
 See the file COPYING for details.
 
@@ -15,6 +13,7 @@ See the file COPYING for details.
 * 2.4MHz "oversampling" support
 * doesn't run as root
 * supports FlightAware-TSV-format connections directly (same as the FlightAware version - no faup1090 needed)
+* support for Stratux JSON format
 * can start from init.d, with detailed config via debconf or `/etc/default/dump1090-mutability`
 * can serve the virtual radar map via an external webserver (lighttpd integration included by default)
 * map view uses receiver lat/long given to dump1090 automatically
