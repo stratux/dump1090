@@ -179,33 +179,33 @@ New variables include NACp and GNSS altitude differential from baro altitude.
 
 Sample Mode S surveillance replies (DF4 / DF 5):
 	
-	{"Icao_addr":10525328,"DF":4,"CA":0,"TypeCode":0,"SubtypeCode":0,"SBS_MsgType":5,"SignalLevel":9,"Tail":null,"Squawk":null,"Emitter_category":null,"OnGround":false,"Lat":null,"Lng":null,"Position_valid":false,"NACp":null,"Alt":14400,"AltIsGNSS":false,"GnssDiffFromBaroAlt":null,"Vvel":null,"Speed_valid":false,"Speed":null,"Track":null,"Timestamp":"2016-02-24T00:44:34.309Z"}
-	{"Icao_addr":10525328,"DF":5,"CA":0,"TypeCode":0,"SubtypeCode":0,"SBS_MsgType":6,"SignalLevel":5,"Tail":null,"Squawk":3651,"Emitter_category":null,"OnGround":false,"Lat":null,"Lng":null,"Position_valid":false,"NACp":null,"Alt":null,"AltIsGNSS":false,"GnssDiffFromBaroAlt":null,"Vvel":null,"Speed_valid":false,"Speed":null,"Track":null,"Timestamp":"2016-02-24T00:39:30.492Z"}
+	{"Icao_addr":10525328,"DF":4,"CA":0,"TypeCode":0,"SubtypeCode":0,"SBS_MsgType":5,"SignalLevel":0.012829,"Tail":null,"Squawk":null,"Emitter_category":null,"OnGround":false,"Lat":null,"Lng":null,"Position_valid":false,"NACp":null,"Alt":14400,"AltIsGNSS":false,"GnssDiffFromBaroAlt":null,"Vvel":null,"Speed_valid":false,"Speed":null,"Track":null,"Timestamp":"2016-02-24T00:44:34.309Z"}
+	{"Icao_addr":10525328,"DF":5,"CA":0,"TypeCode":0,"SubtypeCode":0,"SBS_MsgType":6,"SignalLevel":0.014155,"Tail":null,"Squawk":3651,"Emitter_category":null,"OnGround":false,"Lat":null,"Lng":null,"Position_valid":false,"NACp":null,"Alt":null,"AltIsGNSS":false,"GnssDiffFromBaroAlt":null,"Vvel":null,"Speed_valid":false,"Speed":null,"Track":null,"Timestamp":"2016-02-24T00:39:30.492Z"}
 
 Sample airborne position message (DF17 BDS 0,5):
 	
-	{"Icao_addr":10525328,"DF":17,"CA":5,"TypeCode":11,"SubtypeCode":0,"SBS_MsgType":3,"SignalLevel":12,"Tail":null,"Squawk":null,"Emitter_category":null,"OnGround":false,"Lat":44.933384,"Lng":-93.762147,"Position_valid":true,"NACp":null,"Alt":13850,"AltIsGNSS":false,"GnssDiffFromBaroAlt":null,"Vvel":null,"Speed_valid":false,"Speed":null,"Track":null,"Timestamp":"2016-02-24T00:44:19.783Z"}
+	{"Icao_addr":10525328,"DF":17,"CA":5,"TypeCode":11,"SubtypeCode":0,"SBS_MsgType":3,"SignalLevel":0.011162,,"Tail":null,"Squawk":null,"Emitter_category":null,"OnGround":false,"Lat":44.933384,"Lng":-93.762147,"Position_valid":true,"NACp":null,"Alt":13850,"AltIsGNSS":false,"GnssDiffFromBaroAlt":null,"Vvel":null,"Speed_valid":false,"Speed":null,"Track":null,"Timestamp":"2016-02-24T00:44:19.783Z"}
 
 Sample airborne velocity message (DF17 BDS 0,8):
 
-	{"Icao_addr":10525328,"DF":17,"CA":5,"TypeCode":19,"SubtypeCode":1,"SBS_MsgType":4,"SignalLevel":11,"Tail":null,"Squawk":null,"Emitter_category":null,"OnGround":false,"Lat":null,"Lng":null,"Position_valid":false,"NACp":null,"Alt":null,"AltIsGNSS":false,"GnssDiffFromBaroAlt":-400,"Vvel":2304,"Speed_valid":true,"Speed":306,"Track":271,"Timestamp":"2016-02-24T00:44:21.908Z"}
+	{"Icao_addr":10525328,"DF":17,"CA":5,"TypeCode":19,"SubtypeCode":1,"SBS_MsgType":4,"SignalLevel":0.007394,"Tail":null,"Squawk":null,"Emitter_category":null,"OnGround":false,"Lat":null,"Lng":null,"Position_valid":false,"NACp":null,"Alt":null,"AltIsGNSS":false,"GnssDiffFromBaroAlt":-400,"Vvel":2304,"Speed_valid":true,"Speed":306,"Track":271,"Timestamp":"2016-02-24T00:44:21.908Z"}
 	
 Sample identification message (DF17 BDS 0,8):
 
-	{"Icao_addr":10525328,"DF":17,"CA":5,"TypeCode":4,"SubtypeCode":3,"SBS_MsgType":1,"SignalLevel":12,"Tail":"SKW5956 ","Squawk":null,"Emitter_category":3,"OnGround":false,"Lat":null,"Lng":null,"Position_valid":false,"NACp":null,"Alt":null,"AltIsGNSS":false,"GnssDiffFromBaroAlt":null,"Vvel":null,"Speed_valid":false,"Speed":null,"Track":null,"Timestamp":"2016-02-24T00:44:34.105Z"}
+	{"Icao_addr":10525328,"DF":17,"CA":5,"TypeCode":4,"SubtypeCode":3,"SBS_MsgType":1,"SignalLevel":0.007926,"Tail":"SKW5956 ","Squawk":null,"Emitter_category":3,"OnGround":false,"Lat":null,"Lng":null,"Position_valid":false,"NACp":null,"Alt":null,"AltIsGNSS":false,"GnssDiffFromBaroAlt":null,"Vvel":null,"Speed_valid":false,"Speed":null,"Track":null,"Timestamp":"2016-02-24T00:44:34.105Z"}
 	
 Stratux will decode using the following type definitions. Fields declared as *pointers will be sent from dump1090 as nulls if the reported parameter is not part of the message being decoded.
 
 	type dump1090Data struct {
 		Icao_addr           uint32
-		DF                  int 
-		CA                  int 
-		TypeCode            int 
-		SubtypeCode         int
-		SBS_MsgType         int
-		SignalLevel         int
+		DF                  int     // Mode S downlink format.
+		CA                  int     // Lowest 3 bits of first byte of Mode S message (DF11 and DF17 capability; DF18 control field, zero for all other DF types)
+		TypeCode            int     // Mode S type code
+		SubtypeCode         int     // Mode S subtype code
+		SBS_MsgType         int     // type of SBS message (9 indicates "other")
+		SignalLevel         float64 // Decimal RSSI (0-1 nominal)
 		Tail                *string
-		Squawk              *int 
+		Squawk              *int // Mode A squawk code. Decimal representation of octal format
 		Emitter_category    *int
 		OnGround            *bool
 		Lat                 *float32
@@ -213,15 +213,14 @@ Stratux will decode using the following type definitions. Fields declared as *po
 		Position_valid      bool
 		NACp                *int
 		Alt                 *int
-		AltIsGNSS           bool 
-		GnssDiffFromBaroAlt *int16 // GNSS height above baro altitude in feet; valid range is -3125 to 3125. +/- 3138 indicates larger difference.
+		AltIsGNSS           bool
+		GnssDiffFromBaroAlt *int16 // GNSS height above baro altitude in feet
 		Vvel                *int16
 		Speed_valid         bool
 		Speed               *uint16
 		Track               *uint16
-		Timestamp        time.Time 
+		Timestamp           time.Time // timestamp of last message, UTC
 	}
-
 
 
 Antenna

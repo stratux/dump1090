@@ -673,8 +673,6 @@ static void send_sbs_heartbeat(struct net_service *service)
     completeWrite(service->writer, data + len);
 }
 
-////////////////////////////////////////// Start Stratux block 
-
 //
 //=========================================================================
 //
@@ -682,7 +680,7 @@ static void send_sbs_heartbeat(struct net_service *service)
 // The message structure mm->bFlags tells us what has been updated by this message
 //
 // Output format is a JSON representation of a subset of the fields used in the
-// Stratux traffic structure.
+// Stratux traffic structure and described in README-dump1090.md
 //
 static void modesSendStratuxOutput(struct modesMessage *mm, struct aircraft *a) {
     char *p;
@@ -732,7 +730,7 @@ static void modesSendStratuxOutput(struct modesMessage *mm, struct aircraft *a) 
         return;
     }
 
-    // Begin populating the traffic.go fields.
+    // Begin populating fields.
 	// ICAO address, Mode S message types, and signal level
     
     int cacf = 0; // overload the JSON "CA" field to report CA (DF11 or DF17), CF (DF18), or zero (all other DF types)
@@ -742,7 +740,7 @@ static void modesSendStratuxOutput(struct modesMessage *mm, struct aircraft *a) 
         cacf = mm->cf;
     }
     
-	p += sprintf(p, "{\"Icao_addr\":%d,\"DF\":%d,\"CA\":%d,\"TypeCode\":%d,\"SubtypeCode\":%d,\"SBS_MsgType\":%d,\"SignalLevel\":%f,",mm->addr, mm->msgtype, cacf, mm->metype,  mm->mesub, msgType, mm->signalLevel); // what precision and range is needed for RSSI?
+	p += sprintf(p, "{\"Icao_addr\":%d,\"DF\":%d,\"CA\":%d,\"TypeCode\":%d,\"SubtypeCode\":%d,\"SBS_MsgType\":%d,\"SignalLevel\":%f,",mm->addr, mm->msgtype, cacf, mm->metype,  mm->mesub, msgType, mm->signalLevel); 
     
  	// Callsign
 	if (mm->bFlags & MODES_ACFLAGS_CALLSIGN_VALID) {
@@ -751,7 +749,7 @@ static void modesSendStratuxOutput(struct modesMessage *mm, struct aircraft *a) 
 		p += sprintf(p, "\"Tail\":null,");
 	}   
     
-    //Squawk
+    //Squawk code, decimal representation. E.g. the emergency code is represented as 7700 (0x1e14 == 017024), not 4032 (0x0FC0 == 07700)
     if (mm->bFlags & MODES_ACFLAGS_SQUAWK_VALID) {p += sprintf(p, "\"Squawk\":%x,", mm->modeA);}
     else                                         {p += sprintf(p, "\"Squawk\":null,");}    
     
@@ -781,7 +779,7 @@ static void modesSendStratuxOutput(struct modesMessage *mm, struct aircraft *a) 
 		p += sprintf(p, "\"Emitter_category\":null,");
 	}
     
-    // OnGround
+    // OnGround status
     if (mm->bFlags & MODES_ACFLAGS_AOG_VALID) {
         if (mm->bFlags & MODES_ACFLAGS_AOG) {
             p += sprintf(p, "\"OnGround\":true,");
@@ -823,7 +821,7 @@ static void modesSendStratuxOutput(struct modesMessage *mm, struct aircraft *a) 
     }
     // GNSS Alt Diff From Baro Alt
     if (mm->bFlags & MODES_ACFLAGS_HAE_DELTA_VALID) {
-        p += sprintf(p, "\"GnssDiffFromBaroAlt\":%d,",a->hae_delta);    // Verify that this is part of a and not mm
+        p += sprintf(p, "\"GnssDiffFromBaroAlt\":%d,",a->hae_delta);
     } else {
         p += sprintf(p, "\"GnssDiffFromBaroAlt\":null,");
     }    
@@ -865,7 +863,7 @@ static void modesSendStratuxOutput(struct modesMessage *mm, struct aircraft *a) 
 
 static void send_stratux_heartbeat(struct net_service *service)
 {
-    static char *heartbeat_message = "{\"Icao_addr\":134217727}\r\n";  // 0x07FFFFFF. Overflows 24-bit ICAO to signal invalid #, need to validate that this won't cause problems with traffic.go
+    static char *heartbeat_message = "{\"Icao_addr\":134217727}\r\n";  // 0x07FFFFFF. This is an invalid address even if we strip the high 8 bits (FFFFFF), so it should never decode as a "real" aircraft
     char *data;
     int len = strlen(heartbeat_message);
 
