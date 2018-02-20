@@ -17,18 +17,21 @@ endif
 CPPFLAGS+=-DMODES_DUMP1090_VERSION=\"$(DUMP1090_VERSION)\"
 CFLAGS+=-O2 -g -Wall -Werror -W
 LIBS=-lpthread -lm
-LIBS_RTL=`pkg-config --libs librtlsdr libusb-1.0`
 CC=gcc
 
 UNAME := $(shell uname)
 
 ifeq ($(UNAME), Linux)
+CFLAGS+=`pkg-config --cflags librtlsdr`
 LIBS+=-lrt
+LIBS_RTL=`pkg-config --libs librtlsdr libusb-1.0`
 endif
+
 ifeq ($(UNAME), Darwin)
 # TODO: Putting GCC in C11 mode breaks things.
-CFLAGS+=-std=c11 -DMISSING_GETTIME -DMISSING_NANOSLEEP
-COMPAT+=compat/clock_gettime/clock_gettime.o compat/clock_nanosleep/clock_nanosleep.o
+CFLAGS+=-std=c11 -DMISSING_NANOSLEEP
+COMPAT+=compat/clock_nanosleep/clock_nanosleep.o
+LIBS_RTL=-lrtlsdr -lusb-1.0
 endif
 
 ifeq ($(UNAME), OpenBSD)
@@ -40,8 +43,6 @@ all: dump1090 view1090
 
 %.o: %.c *.h
 	$(CC) $(CPPFLAGS) $(CFLAGS) $(EXTRACFLAGS) -c $< -o $@
-
-dump1090.o: CFLAGS += `pkg-config --cflags librtlsdr`
 
 dump1090: dump1090.o anet.o interactive.o mode_ac.o mode_s.o net_io.o crc.o demod_2000.o demod_2400.o stats.o cpr.o icao_filter.o track.o util.o convert.o $(COMPAT)
 	$(CC) -g -o $@ $^ $(LIBS) $(LIBS_RTL) $(LDFLAGS)
