@@ -698,7 +698,9 @@ static void modesSendStratuxOutput(struct modesMessage *mm, struct aircraft *a) 
 
     
     // Decide on the basic SBS Message Type
-    if        ((mm->msgtype ==  4) || (mm->msgtype == 20)) {
+    if ((mm->msgtype == 32)) { // Mode-A / Mode-C.
+        msgType = 32;
+    } else if ((mm->msgtype ==  4) || (mm->msgtype == 20)) {
         msgType = 5;
     } else if ((mm->msgtype ==  5) || (mm->msgtype == 21)) {
         msgType = 6;
@@ -772,7 +774,14 @@ static void modesSendStratuxOutput(struct modesMessage *mm, struct aircraft *a) 
 				setEmitter = 1;
 		}
 	}
-	
+
+    if ((mm->msgtype == 32) && (mm->fs & 0x0080)) {
+        // Mode-A/Mode-C "IDENT" flag.
+        p += sprintf(p, "\"ModeAIdent\":true,");
+    } else {
+        p += sprintf(p, "\"ModeAIdent\":false,");
+    }
+
 	if (setEmitter) {
 		p += sprintf(p, "\"Emitter_category\":%d,", emitter);
 	} else {
