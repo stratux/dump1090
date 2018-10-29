@@ -58,7 +58,8 @@
  *
  */
 
-
+#include <time.h>
+#ifndef CLOCK_REALTIME
 #include "clock_gettime.h"
 #include <mach/clock.h>             // for clock_get_time
 #include <mach/clock_types.h>       // for mach_timespec_t, CALENDAR_CLOCK, etc
@@ -134,3 +135,4 @@ int clock_gettime(clockid_t clk_id, struct timespec *tp)
     }
     return retval;
 }
+#endif
