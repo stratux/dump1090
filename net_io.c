@@ -756,24 +756,28 @@ static void modesSendStratuxOutput(struct modesMessage *mm, struct aircraft *a) 
     else                                         {p += sprintf(p, "\"Squawk\":null,");}    
     
     // Emitter type
-	int emitter = 0;
-	int setEmitter = 0;
-	if ((mm->msgtype ==  17) || (mm->msgtype = 18)) {
-		switch (mm->metype) {
-			case 1:
-				emitter = ((mm->mesub) | 0x18);
-				setEmitter = 1;
-			case 2:
-				emitter = ((mm->mesub) | 0x10);
-				setEmitter = 1;
-			case 3:
-				emitter = ((mm->mesub) | 0x08);
-				setEmitter = 1;
-			case 4:
-				emitter = (mm->mesub);
-				setEmitter = 1;
-		}
-	}
+    int emitter = 0;
+    int setEmitter = 0;
+    if ((mm->msgtype ==  17) || (mm->msgtype = 18)) {
+        switch (mm->metype) {
+            case 1:
+                emitter = ((mm->mesub) | 0x18);
+                setEmitter = 1;
+                break;
+            case 2:
+                emitter = ((mm->mesub) | 0x10);
+                setEmitter = 1;
+                break;
+            case 3:
+                emitter = ((mm->mesub) | 0x08);
+                setEmitter = 1;
+                break;
+            case 4:
+                emitter = (mm->mesub);
+                setEmitter = 1;
+                break;
+        }
+    }
 
     if ((mm->msgtype == 32) && (mm->fs & 0x0080)) {
         // Mode-A/Mode-C "IDENT" flag.
