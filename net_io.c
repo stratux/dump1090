@@ -758,7 +758,7 @@ static void modesSendStratuxOutput(struct modesMessage *mm, struct aircraft *a) 
     // Emitter type
     int emitter = 0;
     int setEmitter = 0;
-    if ((mm->msgtype ==  17) || (mm->msgtype = 18)) {
+    if ((mm->msgtype ==  17) || (mm->msgtype == 18)) {
         switch (mm->metype) {
             case 1:
                 emitter = ((mm->mesub) | 0x18);
